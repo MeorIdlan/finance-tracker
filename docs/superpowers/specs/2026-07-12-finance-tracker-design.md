@@ -140,7 +140,10 @@ reapply the balance effect atomically.
 
 Discretionary expense transactions use a predefined category list (e.g. Food,
 Transport, Entertainment, Bills, Shopping, Health, Other) to power the
-dashboard's spending-by-category chart.
+dashboard's spending-by-category chart. Categories are defined as a
+TypeScript const/enum in `/shared` (not a database collection) so client and
+server import the same source of truth; `Transaction.category` stores the
+value directly. No per-user customization in v1.
 
 ## 5. Pages
 
