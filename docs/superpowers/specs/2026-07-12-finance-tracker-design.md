@@ -96,10 +96,15 @@ of a silent failure or an opaque MailerSend API error.
   `recovery`), `expiresAt`, `consumedAt`
 - **Session**: `userId`, `expiresAt`, `createdAt`
 - **EmailQuotaUsage**: `yearMonth`, `count`
-- **BankAccount**: `userId`, `name`, `openingBalance`, `createdAt`. Current
-  balance is *computed* as opening balance + all transactions affecting the
-  account (not a stored/editable field). Reconciliation against a real bank
-  is done by adding an adjustment transaction.
+- **BankAccount**: `userId`, `name`, `openingBalance`, `currentBalance`,
+  `createdAt`. `currentBalance` is a stored field, initialized to
+  `openingBalance` and updated atomically (within the same DB transaction) by
+  every transaction create/edit/delete that affects the account — not
+  recomputed from history on each read. A "recompute from transaction
+  history" repair action (exposed via the `accounts` API and used if drift is
+  ever suspected) recalculates and overwrites `currentBalance` from scratch as
+  a safety net. Reconciliation against a real bank is done by adding an
+  adjustment transaction.
 - **SavingsInvestmentAccount**: `userId`, `name`, `type` (`savings` |
   `investment`), `createdAt`
 - **ValueSnapshot**: `accountId`, `date`, `value` — periodic manual entries
@@ -126,8 +131,10 @@ of a silent failure or an opaque MailerSend API error.
   events (logins, passkey add/remove, OTP requests).
 
 Each transaction, on creation, atomically updates the balance/status of
-whatever it's linked to: the bank account's computed balance, a commitment's
-due status, a loan's outstanding balance, or a credit card's balance.
+whatever it's linked to: the bank account's stored `currentBalance`, a
+commitment's due status, a loan's outstanding balance, or a credit card's
+balance. Edits and deletes of existing transactions must likewise reverse and
+reapply the balance effect atomically.
 
 ### 4.1 Expense Categories
 
@@ -152,7 +159,8 @@ dashboard's spending-by-category chart.
 
 - `auth` — register, verify-otp, login (options/verify), recover, logout
 - `passkeys` — list, add, remove
-- `accounts` — bank + savings/investment CRUD, value snapshots
+- `accounts` — bank + savings/investment CRUD, value snapshots, balance
+  recompute (repair action for `currentBalance` drift)
 - `transactions` — CRUD, list with filters
 - `commitments`, `loans`, `credit-cards` — CRUD
 - `dashboard` — aggregated endpoints for widget data (net worth, category
