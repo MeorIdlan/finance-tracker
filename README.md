@@ -32,3 +32,4 @@ Chrome DevTools → WebAuthn → virtual authenticator.
 
 - Spec: `docs/superpowers/specs/2026-07-12-finance-tracker-design.md`
 - Plans: `docs/superpowers/plans/`
+- Deployment: `docs/deployment.md`
