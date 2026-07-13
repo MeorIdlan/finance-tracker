@@ -2,6 +2,7 @@ import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common
 import { ConfigService } from '@nestjs/config';
 import { Response, Request } from 'express';
 import type { RegistrationResponseJSON, AuthenticationResponseJSON } from '@simplewebauthn/server';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { EmailDto, VerifyOtpDto, PasskeyVerifyDto, LoginVerifyDto } from './dto';
 import { setSessionCookie, clearSessionCookie } from './cookie';
@@ -11,6 +12,10 @@ import { RequestUser, SessionService } from '../auth-guard/session.service';
 import { WebauthnService } from './webauthn.service';
 import { AuditLogService } from '../audit/audit.service';
 import { AuthUser } from '@finance/shared';
+import {
+  EmailKeyThrottlerGuard,
+  AUTH_EMAIL_THROTTLER_NAME,
+} from './email-key-throttler.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -23,12 +28,16 @@ export class AuthController {
   ) {}
 
   @Post('register')
+  @UseGuards(EmailKeyThrottlerGuard)
+  @Throttle({ [AUTH_EMAIL_THROTTLER_NAME]: { limit: 5, ttl: 3_600_000 } })
   async register(@Body() dto: EmailDto) {
     await this.auth.startRegistration(dto.email);
     return { message: 'Verification code sent.' };
   }
 
   @Post('recover')
+  @UseGuards(EmailKeyThrottlerGuard)
+  @Throttle({ [AUTH_EMAIL_THROTTLER_NAME]: { limit: 5, ttl: 3_600_000 } })
   async recover(@Body() dto: EmailDto) {
     await this.auth.startRecovery(dto.email);
     return { message: 'Verification code sent.' };
