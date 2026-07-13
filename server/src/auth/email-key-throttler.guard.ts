@@ -13,6 +13,10 @@ export const AUTH_EMAIL_THROTTLER_NAME = 'authEmail';
 
 @Injectable()
 export class EmailKeyThrottlerGuard extends ThrottlerGuard {
+  // Deliberately does NOT call super.onModuleInit() to avoid inheriting DI-injected ThrottlerModuleOptions.
+  // Reverting to inherited config would reintroduce IP-only double-throttling: the global APP_GUARD
+  // ThrottlerGuard would share this guard's throttler name/config and also enforce the 5/hour limit,
+  // using only IP (not email), blocking all unrelated emails from the same IP and defeating this guard's purpose.
   async onModuleInit(): Promise<void> {
     this.throttlers = [
       { name: AUTH_EMAIL_THROTTLER_NAME, ttl: 3_600_000, limit: 5 },
