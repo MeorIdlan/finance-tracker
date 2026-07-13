@@ -9,6 +9,8 @@ import { AuthModule } from './auth/auth.module';
 import { PasskeysModule } from './passkeys/passkeys.module';
 import { AccountsModule } from './accounts/accounts.module';
 import { CommitmentsModule } from './commitments/commitments.module';
+import { LoansModule } from './loans/loans.module';
+import { CreditCardsModule } from './credit-cards/credit-cards.module';
 
 @Module({
   imports: [
@@ -26,6 +28,8 @@ import { CommitmentsModule } from './commitments/commitments.module';
     PasskeysModule,
     AccountsModule,
     CommitmentsModule,
+    LoansModule,
+    CreditCardsModule,
   ],
   controllers: [HealthController],
 })
