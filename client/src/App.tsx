@@ -6,8 +6,10 @@ import PasskeyPage from './pages/PasskeyPage';
 import LoginPage from './pages/LoginPage';
 import RecoverPage from './pages/RecoverPage';
 import ProtectedRoute from './ProtectedRoute';
+import Layout from './Layout';
 import DashboardPage from './pages/DashboardPage';
 import SettingsPage from './pages/SettingsPage';
+import AccountsPage from './pages/AccountsPage';
 
 export default function App() {
   return (
@@ -24,7 +26,9 @@ export default function App() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <DashboardPage />
+                <Layout>
+                  <DashboardPage />
+                </Layout>
               </ProtectedRoute>
             }
           />
@@ -32,7 +36,19 @@ export default function App() {
             path="/settings"
             element={
               <ProtectedRoute>
-                <SettingsPage />
+                <Layout>
+                  <SettingsPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/accounts"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AccountsPage />
+                </Layout>
               </ProtectedRoute>
             }
           />
