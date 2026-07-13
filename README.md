@@ -12,6 +12,9 @@ Prereqs: Node 22+, Docker.
     npm run build:shared
     docker compose up -d mongo
     npm run start:dev --workspace server   # http://localhost:3000
+
+Mongo runs as a single-node replica set (required for multi-document transactions);
+the compose healthcheck initiates it automatically.
     npm run dev --workspace client         # http://localhost:5173
 
 The Vite dev server proxies `/api` to the NestJS server, so cookies and
