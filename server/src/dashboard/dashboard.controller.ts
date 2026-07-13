@@ -35,4 +35,30 @@ export class DashboardController {
       parseInt(limit, 10) || 10,
     );
   }
+
+  @Get('net-worth-trend')
+  netWorthTrend(@CurrentUser() user: RequestUser) {
+    return this.service.netWorthTrend(user.userId);
+  }
+
+  @Get('spending-by-category')
+  spendingByCategory(
+    @CurrentUser() user: RequestUser,
+    @Query('month') month?: string,
+  ) {
+    const m =
+      month && /^\d{4}-\d{2}$/.test(month)
+        ? month
+        : new Date().toISOString().slice(0, 7);
+    return this.service.spendingByCategory(user.userId, m);
+  }
+
+  @Get('spending-trend')
+  spendingTrend(
+    @CurrentUser() user: RequestUser,
+    @Query('months') months = '12',
+  ) {
+    const m = Math.min(36, Math.max(1, parseInt(months, 10) || 12));
+    return this.service.spendingTrend(user.userId, m);
+  }
 }

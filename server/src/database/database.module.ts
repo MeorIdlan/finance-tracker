@@ -26,6 +26,10 @@ import { Commitment, CommitmentSchema } from './schemas/commitment.schema';
 import { Loan, LoanSchema } from './schemas/loan.schema';
 import { CreditCard, CreditCardSchema } from './schemas/credit-card.schema';
 import { Transaction, TransactionSchema } from './schemas/transaction.schema';
+import {
+  NetWorthSnapshot,
+  NetWorthSnapshotSchema,
+} from './schemas/net-worth-snapshot.schema';
 
 const models = MongooseModule.forFeature([
   { name: User.name, schema: UserSchema },
@@ -42,6 +46,7 @@ const models = MongooseModule.forFeature([
   { name: Loan.name, schema: LoanSchema },
   { name: CreditCard.name, schema: CreditCardSchema },
   { name: Transaction.name, schema: TransactionSchema },
+  { name: NetWorthSnapshot.name, schema: NetWorthSnapshotSchema },
 ]);
 
 @Global()

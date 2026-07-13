@@ -3,7 +3,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import {
   BalanceSlice,
+  CategoryTotal,
   DashboardSummary,
+  EXPENSE_CATEGORIES,
+  MonthPoint,
   TransactionDto,
   UpcomingBill,
 } from '@finance/shared';
@@ -13,6 +16,8 @@ import { ValueSnapshot } from '../database/schemas/value-snapshot.schema';
 import { Commitment } from '../database/schemas/commitment.schema';
 import { Loan } from '../database/schemas/loan.schema';
 import { CreditCard } from '../database/schemas/credit-card.schema';
+import { NetWorthSnapshot } from '../database/schemas/net-worth-snapshot.schema';
+import { Transaction } from '../database/schemas/transaction.schema';
 import { commitmentStatus, nextDueDateFrom } from '../common/dates';
 import { CreditCardsService } from '../credit-cards/credit-cards.service';
 import { TransactionsService } from '../transactions/transactions.service';
@@ -28,6 +33,9 @@ export class DashboardService {
     @InjectModel(Commitment.name) private commitmentModel: Model<Commitment>,
     @InjectModel(Loan.name) private loanModel: Model<Loan>,
     @InjectModel(CreditCard.name) private cardModel: Model<CreditCard>,
+    @InjectModel(NetWorthSnapshot.name)
+    private netWorthModel: Model<NetWorthSnapshot>,
+    @InjectModel(Transaction.name) private txnModel: Model<Transaction>,
     private cards: CreditCardsService,
     private transactions: TransactionsService,
   ) {}
@@ -147,5 +155,76 @@ export class DashboardService {
       pageSize: String(Math.min(50, Math.max(1, limit))),
     });
     return page.items;
+  }
+
+  async netWorthTrend(userId: string): Promise<MonthPoint[]> {
+    const uid = new Types.ObjectId(userId);
+    const month = new Date().toISOString().slice(0, 7);
+    const summary = await this.computeSummary(userId);
+    await this.netWorthModel.updateOne(
+      { userId: uid, month },
+      { value: summary.netWorth, computedAt: new Date() },
+      { upsert: true },
+    );
+    const points = await this.netWorthModel
+      .find({ userId: uid })
+      .sort({ month: 1 })
+      .limit(24);
+    return points.map((p) => ({ month: p.month, value: p.value }));
+  }
+
+  async spendingByCategory(
+    userId: string,
+    month: string,
+  ): Promise<CategoryTotal[]> {
+    const start = new Date(`${month}-01T00:00:00Z`);
+    const end = new Date(
+      Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 1),
+    );
+    const rows = await this.txnModel.aggregate<{
+      _id: string;
+      total: number;
+    }>([
+      {
+        $match: {
+          userId: new Types.ObjectId(userId),
+          type: 'expense',
+          date: { $gte: start, $lt: end },
+        },
+      },
+      { $group: { _id: '$category', total: { $sum: '$amount' } } },
+    ]);
+    const byCategory = new Map(rows.map((r) => [r._id, r.total]));
+    return EXPENSE_CATEGORIES.filter((c) => byCategory.has(c)).map((c) => ({
+      category: c,
+      total: byCategory.get(c)!,
+    }));
+  }
+
+  async spendingTrend(userId: string, months: number): Promise<MonthPoint[]> {
+    const now = new Date();
+    const start = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (months - 1), 1),
+    );
+    const rows = await this.txnModel.aggregate<{
+      _id: string;
+      total: number;
+    }>([
+      {
+        $match: {
+          userId: new Types.ObjectId(userId),
+          type: { $in: ['expense', 'commitmentPayment', 'cardCharge'] },
+          date: { $gte: start },
+        },
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m', date: '$date' } },
+          total: { $sum: '$amount' },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+    return rows.map((r) => ({ month: r._id, value: r.total }));
   }
 }
