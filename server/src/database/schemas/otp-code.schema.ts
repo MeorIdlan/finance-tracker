@@ -27,3 +27,4 @@ export class OtpCode {
 
 export const OtpCodeSchema = SchemaFactory.createForClass(OtpCode);
 OtpCodeSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+OtpCodeSchema.index({ email: 1, purpose: 1 }, { unique: true });

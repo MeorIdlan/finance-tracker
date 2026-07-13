@@ -17,16 +17,25 @@ export class OtpService {
 
   async issue(email: string, purpose: OtpPurpose): Promise<string> {
     const code = randomInt(0, 1_000_000).toString().padStart(6, '0');
-    await this.otpModel.findOneAndUpdate(
-      { email: email.toLowerCase(), purpose },
-      {
-        codeHash: hash(code),
-        expiresAt: new Date(Date.now() + OTP_TTL_MS),
-        consumedAt: null,
-        attempts: 0,
-      },
-      { upsert: true },
-    );
+    const filter = { email: email.toLowerCase(), purpose };
+    const update = {
+      codeHash: hash(code),
+      expiresAt: new Date(Date.now() + OTP_TTL_MS),
+      consumedAt: null,
+      attempts: 0,
+    };
+    try {
+      await this.otpModel.findOneAndUpdate(filter, update, { upsert: true });
+    } catch (err: unknown) {
+      const code = (err as { code?: number })?.code;
+      if (code === 11000) {
+        // Lost a concurrent upsert race; the document now exists, so a
+        // plain update will succeed and correctly replace the previous code.
+        await this.otpModel.findOneAndUpdate(filter, update);
+      } else {
+        throw err;
+      }
+    }
     return code;
   }
 
