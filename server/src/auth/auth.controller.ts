@@ -1,15 +1,16 @@
-import { Body, Controller, Post, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Response } from 'express';
-import type { RegistrationResponseJSON } from '@simplewebauthn/server';
+import { Response, Request } from 'express';
+import type { RegistrationResponseJSON, AuthenticationResponseJSON } from '@simplewebauthn/server';
 import { AuthService } from './auth.service';
-import { EmailDto, VerifyOtpDto, PasskeyVerifyDto } from './dto';
-import { setSessionCookie } from './cookie';
+import { EmailDto, VerifyOtpDto, PasskeyVerifyDto, LoginVerifyDto } from './dto';
+import { setSessionCookie, clearSessionCookie } from './cookie';
 import { AuthGuard, AllowPendingSession } from './auth.guard';
 import { CurrentUser } from './current-user.decorator';
 import { RequestUser, SessionService } from './session.service';
 import { WebauthnService } from './webauthn.service';
 import { AuditLogService } from '../audit/audit.service';
+import { AuthUser } from '@finance/shared';
 
 @Controller('auth')
 export class AuthController {
@@ -77,5 +78,46 @@ export class AuthController {
       deviceLabel: cred.deviceLabel,
       createdAt: cred.createdAt.toISOString(),
     };
+  }
+
+  @Post('login/options')
+  async loginOptions(@Body() dto: EmailDto) {
+    return this.webauthn.authenticationOptions(dto.email);
+  }
+
+  @Post('login/verify')
+  async loginVerify(
+    @Body() dto: LoginVerifyDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const userId = await this.webauthn.verifyAuthentication(
+      dto.challengeId,
+      dto.response as unknown as AuthenticationResponseJSON,
+    );
+    const token = await this.sessions.create(userId, 'full');
+    setSessionCookie(res, this.config, token);
+    await this.audit.log({ userId, action: 'auth.login' });
+    return { ok: true };
+  }
+
+  @Post('logout')
+  @UseGuards(AuthGuard)
+  @AllowPendingSession()
+  async logout(
+    @CurrentUser() user: RequestUser,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const token = (req.cookies as Record<string, string>).sid;
+    await this.sessions.destroy(token);
+    clearSessionCookie(res);
+    await this.audit.log({ userId: user.userId, action: 'auth.logout' });
+    return { ok: true };
+  }
+
+  @Get('me')
+  @UseGuards(AuthGuard)
+  me(@CurrentUser() user: RequestUser): AuthUser {
+    return { id: user.userId, email: user.email };
   }
 }
