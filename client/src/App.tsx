@@ -13,6 +13,7 @@ import AccountsPage from './pages/AccountsPage';
 import CommitmentsPage from './pages/CommitmentsPage';
 import LoansPage from './pages/LoansPage';
 import CreditCardsPage from './pages/CreditCardsPage';
+import TransactionsPage from './pages/TransactionsPage';
 
 export default function App() {
   return (
@@ -81,6 +82,16 @@ export default function App() {
               <ProtectedRoute>
                 <Layout>
                   <CreditCardsPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/transactions"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <TransactionsPage />
                 </Layout>
               </ProtectedRoute>
             }

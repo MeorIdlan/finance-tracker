@@ -8,6 +8,11 @@ export default defineConfig({
       '/api': 'http://localhost:3000',
     },
   },
+  build: {
+    commonjsOptions: {
+      include: [/shared/, /node_modules/],
+    },
+  },
   test: {
     globals: true,
     environment: 'node',
