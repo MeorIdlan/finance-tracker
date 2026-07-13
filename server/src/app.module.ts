@@ -7,6 +7,7 @@ import { AuditModule } from './audit/audit.module';
 import { EmailModule } from './email/email.module';
 import { AuthModule } from './auth/auth.module';
 import { PasskeysModule } from './passkeys/passkeys.module';
+import { AccountsModule } from './accounts/accounts.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { PasskeysModule } from './passkeys/passkeys.module';
     EmailModule,
     AuthModule,
     PasskeysModule,
+    AccountsModule,
   ],
   controllers: [HealthController],
 })
