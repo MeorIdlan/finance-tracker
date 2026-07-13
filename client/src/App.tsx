@@ -10,6 +10,9 @@ import Layout from './Layout';
 import DashboardPage from './pages/DashboardPage';
 import SettingsPage from './pages/SettingsPage';
 import AccountsPage from './pages/AccountsPage';
+import CommitmentsPage from './pages/CommitmentsPage';
+import LoansPage from './pages/LoansPage';
+import CreditCardsPage from './pages/CreditCardsPage';
 
 export default function App() {
   return (
@@ -48,6 +51,36 @@ export default function App() {
               <ProtectedRoute>
                 <Layout>
                   <AccountsPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/commitments"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <CommitmentsPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/loans"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <LoansPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/credit-cards"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <CreditCardsPage />
                 </Layout>
               </ProtectedRoute>
             }
