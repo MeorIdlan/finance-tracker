@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { OtpService } from './otp.service';
@@ -9,7 +9,7 @@ import { EmailModule } from '../email/email.module';
 import { AuditModule } from '../audit/audit.module';
 
 @Module({
-  imports: [EmailModule, AuditModule],
+  imports: [EmailModule, forwardRef(() => AuditModule)],
   controllers: [AuthController],
   providers: [
     AuthService,
