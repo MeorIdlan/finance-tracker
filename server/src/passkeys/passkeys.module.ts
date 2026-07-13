@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { PasskeysController } from './passkeys.controller';
-import { AuthModule } from '../auth/auth.module';
+import { AuthGuardModule } from '../auth-guard/auth-guard.module';
 import { AuditModule } from '../audit/audit.module';
 
 @Module({
-  imports: [AuthModule, AuditModule],
+  imports: [AuthGuardModule, AuditModule],
   controllers: [PasskeysController],
 })
 export class PasskeysModule {}

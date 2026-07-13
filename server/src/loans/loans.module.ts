@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { AuthModule } from '../auth/auth.module';
+import { AuthGuardModule } from '../auth-guard/auth-guard.module';
 import { AuditModule } from '../audit/audit.module';
 import { LoansService } from './loans.service';
 import { LoansController } from './loans.controller';
 
 @Module({
-  imports: [AuthModule, AuditModule],
+  imports: [AuthGuardModule, AuditModule],
   controllers: [LoansController],
   providers: [LoansService],
   exports: [LoansService],

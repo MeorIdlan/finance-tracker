@@ -11,9 +11,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { PasskeySummary } from '@finance/shared';
 import { Credential } from '../database/schemas/credential.schema';
-import { AuthGuard } from '../auth/auth.guard';
+import { AuthGuard } from '../auth-guard/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
-import { RequestUser } from '../auth/session.service';
+import { RequestUser } from '../auth-guard/session.service';
 import { AuditLogService } from '../audit/audit.service';
 
 @Controller('passkeys')

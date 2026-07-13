@@ -8,9 +8,9 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { AuthGuard } from '../auth/auth.guard';
+import { AuthGuard } from '../auth-guard/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
-import { RequestUser } from '../auth/session.service';
+import { RequestUser } from '../auth-guard/session.service';
 import { SavingsAccountsService } from './savings-accounts.service';
 import {
   CreateSavingsAccountDto,

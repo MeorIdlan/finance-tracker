@@ -9,7 +9,7 @@ import { Model } from 'mongoose';
 import { User } from '../database/schemas/user.schema';
 import { OtpPurpose } from '../database/schemas/otp-code.schema';
 import { OtpService } from './otp.service';
-import { SessionService } from './session.service';
+import { SessionService } from '../auth-guard/session.service';
 import { EmailService } from '../email/email.service';
 import { AuditLogService } from '../audit/audit.service';
 

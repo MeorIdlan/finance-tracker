@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { AuthModule } from '../auth/auth.module';
+import { AuthGuardModule } from '../auth-guard/auth-guard.module';
 import { AuditModule } from '../audit/audit.module';
 import { CommitmentsService } from './commitments.service';
 import { CommitmentsController } from './commitments.controller';
 
 @Module({
-  imports: [AuthModule, AuditModule],
+  imports: [AuthGuardModule, AuditModule],
   controllers: [CommitmentsController],
   providers: [CommitmentsService],
   exports: [CommitmentsService],

@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { AuthModule } from '../auth/auth.module';
+import { AuthGuardModule } from '../auth-guard/auth-guard.module';
 import { AuditModule } from '../audit/audit.module';
 import { AccountsModule } from '../accounts/accounts.module';
 import { CommitmentsModule } from '../commitments/commitments.module';
@@ -10,7 +10,7 @@ import { TransactionsController } from './transactions.controller';
 
 @Module({
   imports: [
-    AuthModule,
+    AuthGuardModule,
     AuditModule,
     AccountsModule,
     CommitmentsModule,

@@ -5,9 +5,9 @@ import type { RegistrationResponseJSON, AuthenticationResponseJSON } from '@simp
 import { AuthService } from './auth.service';
 import { EmailDto, VerifyOtpDto, PasskeyVerifyDto, LoginVerifyDto } from './dto';
 import { setSessionCookie, clearSessionCookie } from './cookie';
-import { AuthGuard, AllowPendingSession } from './auth.guard';
+import { AuthGuard, AllowPendingSession } from '../auth-guard/auth.guard';
 import { CurrentUser } from './current-user.decorator';
-import { RequestUser, SessionService } from './session.service';
+import { RequestUser, SessionService } from '../auth-guard/session.service';
 import { WebauthnService } from './webauthn.service';
 import { AuditLogService } from '../audit/audit.service';
 import { AuthUser } from '@finance/shared';

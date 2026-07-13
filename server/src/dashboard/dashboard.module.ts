@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
-import { AuthModule } from '../auth/auth.module';
+import { AuthGuardModule } from '../auth-guard/auth-guard.module';
 import { CreditCardsModule } from '../credit-cards/credit-cards.module';
 import { TransactionsModule } from '../transactions/transactions.module';
 import { DashboardService } from './dashboard.service';
 import { DashboardController } from './dashboard.controller';
 
 @Module({
-  imports: [AuthModule, CreditCardsModule, TransactionsModule],
+  imports: [AuthGuardModule, CreditCardsModule, TransactionsModule],
   controllers: [DashboardController],
   providers: [DashboardService],
 })
