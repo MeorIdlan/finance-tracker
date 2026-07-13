@@ -168,9 +168,9 @@ export class DashboardService {
     );
     const points = await this.netWorthModel
       .find({ userId: uid })
-      .sort({ month: 1 })
+      .sort({ month: -1 })
       .limit(24);
-    return points.map((p) => ({ month: p.month, value: p.value }));
+    return points.reverse().map((p) => ({ month: p.month, value: p.value }));
   }
 
   async spendingByCategory(

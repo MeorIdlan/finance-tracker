@@ -83,4 +83,57 @@ describe('dashboard trend endpoints', () => {
       .set('Cookie', cookie);
     expect(again.body).toHaveLength(1);
   });
+
+  it('returns most recent 24 months when history exceeds 24 months', async () => {
+    const { getModelToken } = require('@nestjs/mongoose');
+    const NetWorthSnapshot = require('../src/database/schemas/net-worth-snapshot.schema')
+      .NetWorthSnapshot;
+    const model = ctx.app.get(getModelToken(NetWorthSnapshot.name));
+
+    // Get user ID from the seeded user
+    const User = require('../src/database/schemas/user.schema').User;
+    const userModel = ctx.app.get(getModelToken(User.name));
+    const user = await userModel.findOne({ email: 'trend@user.com' });
+    const userId = user._id;
+
+    // Seed 30 months of data (oldest first)
+    const baseDate = new Date(2024, 0, 1); // January 2024
+    const snapshots = [];
+    for (let i = 0; i < 30; i++) {
+      const month = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, 1);
+      const monthStr = month.toISOString().slice(0, 7);
+      snapshots.push({
+        userId,
+        month: monthStr,
+        value: 100000 + i * 1000, // increasing value over time
+        computedAt: new Date(),
+      });
+    }
+    await model.insertMany(snapshots);
+
+    // Call the endpoint
+    const res = await request(ctx.app.getHttpServer())
+      .get('/api/dashboard/net-worth-trend')
+      .set('Cookie', cookie)
+      .expect(200);
+
+    // Should have at most 24 entries
+    expect(res.body.length).toBeLessThanOrEqual(24);
+
+    // Should include the current month (most recent)
+    const months = res.body.map((p: { month: string }) => p.month);
+    expect(months).toContain(thisMonth);
+
+    // Should be in ascending order
+    for (let i = 1; i < res.body.length; i++) {
+      expect(res.body[i].month >= res.body[i - 1].month).toBe(true);
+    }
+
+    // Should NOT include the oldest months (months 0-5)
+    const oldestMonths = snapshots.slice(0, 6).map((s) => s.month);
+    const returnedMonths = new Set(months);
+    for (const old of oldestMonths) {
+      expect(returnedMonths).not.toContain(old);
+    }
+  });
 });
