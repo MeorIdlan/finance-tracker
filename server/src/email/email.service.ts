@@ -29,22 +29,34 @@ export class EmailService {
 
   private async reserveQuotaSlot(): Promise<void> {
     // Atomically increment only while below quota; null result = exhausted
-    // or the row does not exist yet.
-    const updated = await this.quotaModel.findOneAndUpdate(
-      { yearMonth: this.yearMonth(), count: { $lt: this.quota } },
-      { $inc: { count: 1 } },
-      { new: true },
-    );
-    if (updated) return;
-    const existing = await this.quotaModel.findOne({
-      yearMonth: this.yearMonth(),
-    });
-    if (existing) {
-      throw new ServiceUnavailableException(
-        'Monthly email quota reached. Please try again later.',
+    // or the row does not exist yet. On upsert, Mongo applies $inc to the
+    // (implicit zero) starting value, so a newly-created row ends at 1.
+    const yearMonth = this.yearMonth();
+    let updated;
+    try {
+      updated = await this.quotaModel.findOneAndUpdate(
+        { yearMonth, count: { $lt: this.quota } },
+        { $inc: { count: 1 } },
+        { new: true, upsert: true },
       );
+    } catch (err) {
+      // Two concurrent requests can both attempt to upsert the first row
+      // for a new month; only one insert wins and the other throws a
+      // duplicate-key error. The row now exists, so retry without upsert.
+      if ((err as { code?: number }).code === 11000) {
+        updated = await this.quotaModel.findOneAndUpdate(
+          { yearMonth, count: { $lt: this.quota } },
+          { $inc: { count: 1 } },
+          { new: true },
+        );
+      } else {
+        throw err;
+      }
     }
-    await this.quotaModel.create({ yearMonth: this.yearMonth(), count: 1 });
+    if (updated) return;
+    throw new ServiceUnavailableException(
+      'Monthly email quota reached. Please try again later.',
+    );
   }
 
   async sendOtpEmail(to: string, code: string): Promise<void> {
