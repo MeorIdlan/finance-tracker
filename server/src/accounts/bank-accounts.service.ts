@@ -107,4 +107,35 @@ export class BankAccountsService {
       metadata: { name: doc.name },
     });
   }
+
+  async recompute(
+    userId: string,
+    id: string,
+  ): Promise<{ currentBalance: number; drift: number }> {
+    const acc = await this.mustOwn(userId, id);
+    const txns = await this.txnModel.find({
+      userId: new Types.ObjectId(userId),
+      $or: [{ accountId: acc._id }, { toAccountId: acc._id }],
+    });
+    let balance = acc.openingBalance;
+    for (const t of txns) {
+      if (t.toAccountId?.equals(acc._id) && t.type === 'transfer') {
+        balance += t.amount;
+      }
+      if (t.accountId?.equals(acc._id)) {
+        balance += t.type === 'income' ? t.amount : -t.amount;
+      }
+    }
+    const drift = balance - acc.currentBalance;
+    acc.currentBalance = balance;
+    await acc.save();
+    await this.audit.log({
+      userId,
+      action: 'bankAccount.recomputed',
+      entityType: 'BankAccount',
+      entityId: id,
+      metadata: { drift },
+    });
+    return { currentBalance: balance, drift };
+  }
 }

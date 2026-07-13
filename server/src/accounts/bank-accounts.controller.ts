@@ -43,4 +43,9 @@ export class BankAccountsController {
     await this.service.remove(user.userId, id);
     return { ok: true };
   }
+
+  @Post(':id/recompute')
+  recompute(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+    return this.service.recompute(user.userId, id);
+  }
 }
