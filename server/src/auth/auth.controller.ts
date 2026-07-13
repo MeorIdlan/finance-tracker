@@ -40,7 +40,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const token = await this.auth.verifyOtp(dto.email, dto.code, dto.purpose);
-    setSessionCookie(res, this.config, token);
+    setSessionCookie(res, this.config, token, 'pending_passkey');
     return { scope: 'pending_passkey' };
   }
 
@@ -95,7 +95,7 @@ export class AuthController {
       dto.response as unknown as AuthenticationResponseJSON,
     );
     const token = await this.sessions.create(userId, 'full');
-    setSessionCookie(res, this.config, token);
+    setSessionCookie(res, this.config, token, 'full');
     await this.audit.log({ userId, action: 'auth.login' });
     return { ok: true };
   }

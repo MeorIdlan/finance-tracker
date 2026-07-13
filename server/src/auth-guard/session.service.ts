@@ -6,7 +6,7 @@ import { createHash, randomBytes } from 'crypto';
 import { Session, SessionScope } from '../database/schemas/session.schema';
 import { User } from '../database/schemas/user.schema';
 
-const PENDING_TTL_MS = 15 * 60 * 1000;
+export const PENDING_TTL_MS = 15 * 60 * 1000;
 
 export interface RequestUser {
   sessionId: string;
