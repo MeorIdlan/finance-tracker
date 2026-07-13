@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
+import type { TooltipItem } from 'chart.js';
 import {
   BalanceSlice,
   CategoryTotal,
@@ -19,12 +20,12 @@ const theme = vizTheme();
 setupCharts(theme);
 
 function senTicks(value: unknown): string {
-  return `RM ${(Number(value) / 100).toLocaleString()}`;
+  return formatSen(Number(value));
 }
 
 const senTooltip = {
   callbacks: {
-    label: (ctx: any) => {
+    label: (ctx: TooltipItem<any>) => {
       const raw =
         typeof ctx.parsed === 'number' ? ctx.parsed : (ctx.parsed.y ?? 0);
       return ` ${formatSen(raw)}`;
