@@ -43,11 +43,15 @@ export default function CommitmentsPage() {
   }
 
   async function toggleActive(c: CommitmentDto) {
-    await api(`/commitments/${c.id}`, {
-      method: 'PATCH',
-      body: { active: !c.active },
-    });
-    await load();
+    try {
+      await api(`/commitments/${c.id}`, {
+        method: 'PATCH',
+        body: { active: !c.active },
+      });
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Update failed.');
+    }
   }
 
   async function remove(id: string) {
