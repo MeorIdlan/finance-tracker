@@ -3654,3 +3654,31 @@ git commit -m "chore: add dev docker-compose (mongo) and README quickstart"
 - Financial entities, transactions, balances → Plan 2.
 - Dashboard widgets/charts, production Dockerfiles, nginx, Cloudflare Tunnel → Plan 3.
 - Email reminders, amortization, multi-currency → out of scope for v1 entirely (see spec §8).
+
+## Implementation Status
+
+Plan 1 is complete: all 15 tasks implemented, task-reviewed, and merged into `dev`.
+Full auth stack verified via automated suite (10 suites / 30 tests) and a live
+Playwright e2e run against real dev servers and a real MailerSend send.
+
+### Final Review Follow-ups (non-blocking, deferred)
+
+Raised in the final whole-branch review; no Critical/Important findings beyond the
+bugs already fixed per-task (email-quota month-rollover race, OTP-duplication race,
+and a 404-vs-400 check-order fix in `PasskeysController`). These four are logged for
+future work, not fixed as part of Plan 1:
+
+1. **No rate limiting on unauthenticated `register`/`recover` endpoints** — a
+   self-inflicted-DoS risk via email quota exhaustion (an attacker can spam OTP
+   requests to burn the monthly MailerSend quota). Acceptable for a self-hosted v1;
+   add rate limiting in a follow-up.
+2. **`AuditModule` <-> `AuthModule` `forwardRef` cycle** — correctly implemented but
+   avoidable with a cleaner module split (e.g. extracting a shared audit-emitting
+   interface). Not blocking.
+3. **Session cookie `maxAge` always uses `SESSION_TTL_DAYS` (30d)**, even for
+   15-minute `pending_passkey` sessions — cosmetic only; the server-side session TTL
+   is enforced correctly regardless of the cookie's advertised `maxAge`.
+4. **`recover`/`login` email-enumeration disclosure** — response shape/timing can
+   reveal whether an email is registered. This matches the spec's own accepted v1
+   trade-off (§3, "Never return whether an email exists... accepted v1 trade-off,
+   self-hosted app"); informational only, not a new issue.
