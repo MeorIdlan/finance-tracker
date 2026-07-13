@@ -6,7 +6,7 @@ Commit: `daf907a` — "feat(server): rate limit register/recover to prevent emai
 
 ## What I implemented
 
-1. `server/package.json` / root `package-lock.json` — added `@nestjs/throttler@^6` (installed 6.4.0). This repo
+1. `server/package.json` / root `package-lock.json` — added `@nestjs/throttler@^6` (installed 6.5.0). This repo
    is an npm workspaces monorepo with a single root lockfile; there is no `server/package-lock.json`, so the root
    lockfile is what's committed.
 2. `server/src/app.module.ts` — added `ThrottlerModule.forRoot([{ name: 'default', ttl: 60_000, limit: 100 }])`

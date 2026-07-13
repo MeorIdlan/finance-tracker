@@ -43,6 +43,14 @@ users).
 asserting the 6th returns 429; a 6th request with a different email (same IP) still
 succeeds within the global default.
 
+**Accepted residual risk:** the per-email 5/hour cap protects a single inbox from OTP
+bombing, but it doesn't cap aggregate MailerSend quota consumption if an attacker
+rotates through many distinct fake email addresses from the same IP — only the global
+100/min IP-wide throttle bounds that, and it's a coarse backstop rather than a targeted
+fix. This is accepted as a v1 trade-off for a self-hosted app, consistent with the
+existing email-enumeration trade-off documented in
+`docs/superpowers/specs/2026-07-12-finance-tracker-design.md` §3.
+
 ## 2. `AuditModule` <-> `AuthModule` forwardRef cycle
 
 **Problem:** `AuthModule` imports `AuditModule` (for `AuditLogService`, used in

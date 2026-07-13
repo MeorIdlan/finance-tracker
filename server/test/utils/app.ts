@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
 import { AppModule } from '../../src/app.module';
 import { EmailService } from '../../src/email/email.service';
@@ -19,7 +20,10 @@ export async function createTestApp(): Promise<TestCtx> {
       },
     })
     .compile();
-  const app = moduleRef.createNestApplication();
+  const app = moduleRef.createNestApplication<NestExpressApplication>();
+  // Mirror main.ts's trust proxy setting so e2e tests exercise the same
+  // req.ip resolution behavior as production (X-Forwarded-For aware).
+  app.set('trust proxy', true);
   app.setGlobalPrefix('api');
   app.use(cookieParser());
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
