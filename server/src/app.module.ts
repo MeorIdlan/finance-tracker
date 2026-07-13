@@ -12,6 +12,7 @@ import { CommitmentsModule } from './commitments/commitments.module';
 import { LoansModule } from './loans/loans.module';
 import { CreditCardsModule } from './credit-cards/credit-cards.module';
 import { TransactionsModule } from './transactions/transactions.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     LoansModule,
     CreditCardsModule,
     TransactionsModule,
+    DashboardModule,
   ],
   controllers: [HealthController],
 })

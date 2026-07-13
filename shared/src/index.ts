@@ -103,3 +103,39 @@ export interface Paginated<T> {
   items: T[];
   total: number;
 }
+
+// ---- Dashboard DTOs (Plan 3) ----
+
+export interface DashboardSummary {
+  bankTotal: number;
+  savingsTotal: number;
+  loanTotal: number;
+  cardTotal: number;
+  assets: number;
+  liabilities: number;
+  netWorth: number;
+}
+
+export interface BalanceSlice {
+  name: string;
+  kind: 'bank' | 'savings' | 'investment';
+  value: number;
+}
+
+export interface UpcomingBill {
+  source: 'commitment' | 'creditCard';
+  name: string;
+  amount: number;
+  dueDate: string;
+  status: CommitmentStatus;
+}
+
+export interface MonthPoint {
+  month: string; // "2026-07"
+  value: number;
+}
+
+export interface CategoryTotal {
+  category: ExpenseCategory;
+  total: number;
+}
