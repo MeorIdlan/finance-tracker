@@ -5,6 +5,9 @@ import VerifyOtpPage from './pages/VerifyOtpPage';
 import PasskeyPage from './pages/PasskeyPage';
 import LoginPage from './pages/LoginPage';
 import RecoverPage from './pages/RecoverPage';
+import ProtectedRoute from './ProtectedRoute';
+import DashboardPage from './pages/DashboardPage';
+import SettingsPage from './pages/SettingsPage';
 
 export default function App() {
   return (
@@ -17,8 +20,22 @@ export default function App() {
           <Route path="/register/passkey" element={<PasskeyPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/recover" element={<RecoverPage />} />
-          <Route path="/dashboard" element={<div>dashboard</div>} />
-          <Route path="/settings" element={<div>settings</div>} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
