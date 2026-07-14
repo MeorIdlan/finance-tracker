@@ -2,10 +2,16 @@ import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { LoanDto } from '@finance/shared';
 import { api, ApiError } from '../api';
 import { formatSen, parseRM } from '../money';
+import Button from '../components/Button';
+import Input from '../components/Input';
+import IconButton from '../components/IconButton';
+import { TrashIcon } from '../components/icons';
+import Drawer from '../components/Drawer';
 
 export default function LoansPage() {
   const [items, setItems] = useState<LoanDto[]>([]);
   const [error, setError] = useState('');
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [name, setName] = useState('');
   const [principal, setPrincipal] = useState('');
   const [rate, setRate] = useState('');
@@ -40,6 +46,7 @@ export default function LoansPage() {
       setPrincipal('');
       setRate('');
       setBalance('');
+      setDrawerOpen(false);
       await load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong.');
@@ -56,49 +63,77 @@ export default function LoansPage() {
   }
 
   return (
-    <main>
-      <h1>Loans</h1>
-      {error && <p role="alert">{error}</p>}
-      <ul>
+    <div>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-lg font-semibold">Loans</h1>
+        <Button onClick={() => setDrawerOpen(true)}>+ Add loan</Button>
+      </div>
+      {error && (
+        <p role="alert" className="mb-4 text-sm text-danger">
+          {error}
+        </p>
+      )}
+
+      <ul className="divide-y divide-border rounded-lg border border-border">
         {items.map((l) => {
           const paidPct =
             l.principal > 0
               ? Math.round(((l.principal - l.currentBalance) / l.principal) * 100)
               : 0;
           return (
-            <li key={l.id}>
-              {l.name}: {formatSen(l.currentBalance)} remaining of{' '}
-              {formatSen(l.principal)} ({paidPct}% paid, {l.interestRate}% p.a.){' '}
-              <button onClick={() => remove(l.id)}>Delete</button>
+            <li key={l.id} className="flex items-center justify-between px-4 py-3">
+              <div>
+                <div className="text-sm text-ink">{l.name}</div>
+                <div className="font-mono text-sm tabular-nums text-muted">
+                  {formatSen(l.currentBalance)} remaining of{' '}
+                  {formatSen(l.principal)} ({paidPct}% paid, {l.interestRate}% p.a.)
+                </div>
+              </div>
+              <IconButton
+                label="Delete"
+                variant="destructive"
+                onClick={() => remove(l.id)}
+              >
+                <TrashIcon />
+              </IconButton>
             </li>
           );
         })}
       </ul>
-      <form onSubmit={add}>
-        <input
-          placeholder="Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-        <input
-          placeholder="Principal (RM)"
-          value={principal}
-          onChange={(e) => setPrincipal(e.target.value)}
-          required
-        />
-        <input
-          placeholder="Interest rate % p.a."
-          value={rate}
-          onChange={(e) => setRate(e.target.value)}
-        />
-        <input
-          placeholder="Current balance (RM, optional)"
-          value={balance}
-          onChange={(e) => setBalance(e.target.value)}
-        />
-        <button type="submit">Add loan</button>
-      </form>
-    </main>
+
+      <Drawer open={drawerOpen} title="Add loan" onClose={() => setDrawerOpen(false)}>
+        <form onSubmit={add} className="flex flex-col gap-4">
+          <Input
+            id="name"
+            label="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+          <Input
+            id="principal"
+            label="Principal (RM)"
+            value={principal}
+            onChange={(e) => setPrincipal(e.target.value)}
+            required
+          />
+          <Input
+            id="rate"
+            label="Interest rate % p.a."
+            value={rate}
+            onChange={(e) => setRate(e.target.value)}
+          />
+          <Input
+            id="balance"
+            label="Current balance (RM, optional)"
+            value={balance}
+            onChange={(e) => setBalance(e.target.value)}
+          />
+          <Button type="submit" className="w-full">
+            Add loan
+          </Button>
+        </form>
+      </Drawer>
+    </div>
   );
 }
