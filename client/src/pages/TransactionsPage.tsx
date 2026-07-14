@@ -11,6 +11,14 @@ import {
 } from '@finance/shared';
 import { api, ApiError } from '../api';
 import { formatSen, parseRM } from '../money';
+import Button from '../components/Button';
+import Input from '../components/Input';
+import Select from '../components/Select';
+import Badge from '../components/Badge';
+import IconButton from '../components/IconButton';
+import { EditIcon, TrashIcon } from '../components/icons';
+import Drawer from '../components/Drawer';
+import Pagination from '../components/Pagination';
 
 const TYPE_LABELS: Record<TransactionType, string> = {
   income: 'Income',
@@ -34,6 +42,9 @@ export default function TransactionsPage() {
   const [page, setPage] = useState(1);
   const [filterType, setFilterType] = useState('');
   const [error, setError] = useState('');
+
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editing, setEditing] = useState<TransactionDto | null>(null);
 
   // form state
   const [type, setType] = useState<TransactionType>('expense');
@@ -85,43 +96,55 @@ export default function TransactionsPage() {
     void loadList();
   }, [loadList]);
 
-  async function add(e: FormEvent) {
+  function openAdd() {
+    setEditing(null);
+    setType('expense');
+    setAmount('');
+    setDate(new Date().toISOString().slice(0, 10));
+    setCategory(EXPENSE_CATEGORIES[0]);
+    setAccountId('');
+    setToAccountId('');
+    setLinkedEntityId('');
+    setNote('');
+    setDrawerOpen(true);
+  }
+
+  function openEdit(t: TransactionDto) {
+    setEditing(t);
+    setAmount((t.amount / 100).toFixed(2));
+    setDrawerOpen(true);
+  }
+
+  async function submit(e: FormEvent) {
     e.preventDefault();
     setError('');
     const sen = parseRM(amount);
     if (sen === null) return setError('Invalid amount.');
     try {
-      await api('/transactions', {
-        method: 'POST',
-        body: {
-          type,
-          amount: sen,
-          date,
-          ...(needsCategory ? { category } : {}),
-          ...(needsAccount ? { accountId } : {}),
-          ...(needsToAccount ? { toAccountId } : {}),
-          ...(linkedOptions.length ? { linkedEntityId } : {}),
-          ...(note ? { note } : {}),
-        },
-      });
-      setAmount('');
-      setNote('');
+      if (editing) {
+        await api(`/transactions/${editing.id}`, {
+          method: 'PATCH',
+          body: { amount: sen },
+        });
+      } else {
+        await api('/transactions', {
+          method: 'POST',
+          body: {
+            type,
+            amount: sen,
+            date,
+            ...(needsCategory ? { category } : {}),
+            ...(needsAccount ? { accountId } : {}),
+            ...(needsToAccount ? { toAccountId } : {}),
+            ...(linkedOptions.length ? { linkedEntityId } : {}),
+            ...(note ? { note } : {}),
+          },
+        });
+      }
+      setDrawerOpen(false);
       await Promise.all([loadList(), loadRefs()]);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong.');
-    }
-  }
-
-  async function editAmount(t: TransactionDto) {
-    const input = window.prompt('New amount (RM)?', (t.amount / 100).toFixed(2));
-    if (!input) return;
-    const sen = parseRM(input);
-    if (sen === null) return setError('Invalid amount.');
-    try {
-      await api(`/transactions/${t.id}`, { method: 'PATCH', body: { amount: sen } });
-      await Promise.all([loadList(), loadRefs()]);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Edit failed.');
     }
   }
 
@@ -137,108 +160,25 @@ export default function TransactionsPage() {
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
-    <main>
-      <h1>Transactions</h1>
-      {error && <p role="alert">{error}</p>}
+    <div>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-lg font-semibold">Transactions</h1>
+        <Button onClick={openAdd}>+ Add transaction</Button>
+      </div>
+      {error && (
+        <p role="alert" className="mb-4 text-sm text-danger">
+          {error}
+        </p>
+      )}
 
-      <section>
-        <h2>Add transaction</h2>
-        <form onSubmit={add}>
-          <select
-            value={type}
-            onChange={(e) => {
-              setType(e.target.value as TransactionType);
-              setLinkedEntityId('');
-            }}
-          >
-            {Object.entries(TYPE_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-          <input
-            placeholder="Amount (RM)"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            required
-          />
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
-          />
-          {needsAccount && (
-            <select
-              value={accountId}
-              onChange={(e) => setAccountId(e.target.value)}
-              required
-            >
-              <option value="">Select account…</option>
-              {banks.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
-          )}
-          {needsToAccount && (
-            <select
-              value={toAccountId}
-              onChange={(e) => setToAccountId(e.target.value)}
-              required
-            >
-              <option value="">To account…</option>
-              {banks
-                .filter((b) => b.id !== accountId)
-                .map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name}
-                  </option>
-                ))}
-            </select>
-          )}
-          {needsCategory && (
-            <select value={category} onChange={(e) => setCategory(e.target.value)}>
-              {EXPENSE_CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          )}
-          {linkedOptions.length > 0 && (
-            <select
-              value={linkedEntityId}
-              onChange={(e) => setLinkedEntityId(e.target.value)}
-              required
-            >
-              <option value="">Select…</option>
-              {linkedOptions.map(([id, name]) => (
-                <option key={id} value={id}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          )}
-          <input
-            placeholder="Note (optional)"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-          />
-          <button type="submit">Add</button>
-        </form>
-      </section>
-
-      <section>
-        <h2>History</h2>
-        <select
+      <div className="mb-4">
+        <Select
           value={filterType}
           onChange={(e) => {
             setPage(1);
             setFilterType(e.target.value);
           }}
+          className="w-auto"
         >
           <option value="">All types</option>
           {Object.entries(TYPE_LABELS).map(([value, label]) => (
@@ -246,44 +186,181 @@ export default function TransactionsPage() {
               {label}
             </option>
           ))}
-        </select>
-        <table>
+        </Select>
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border border-border">
+        <table className="w-full text-sm">
           <thead>
-            <tr>
-              <th>Date</th>
-              <th>Type</th>
-              <th>Amount</th>
-              <th>Category</th>
-              <th>Note</th>
-              <th></th>
+            <tr className="text-left text-xs uppercase tracking-wide text-muted">
+              <th className="px-3 py-2 font-medium">Date</th>
+              <th className="px-3 py-2 font-medium">Type</th>
+              <th className="px-3 py-2 font-medium">Amount</th>
+              <th className="px-3 py-2 font-medium">Category</th>
+              <th className="px-3 py-2 font-medium">Note</th>
+              <th className="px-3 py-2" />
             </tr>
           </thead>
           <tbody>
             {items.map((t) => (
-              <tr key={t.id}>
-                <td>{t.date.slice(0, 10)}</td>
-                <td>{TYPE_LABELS[t.type]}</td>
-                <td>{formatSen(t.amount)}</td>
-                <td>{t.category ?? '—'}</td>
-                <td>{t.note ?? ''}</td>
-                <td>
-                  <button onClick={() => editAmount(t)}>Edit</button>{' '}
-                  <button onClick={() => remove(t.id)}>Delete</button>
+              <tr key={t.id} className="border-t border-border">
+                <td className="px-3 py-2 font-mono text-xs tabular-nums text-muted">
+                  {t.date.slice(0, 10)}
+                </td>
+                <td className="px-3 py-2">
+                  <Badge tone="accent">{TYPE_LABELS[t.type]}</Badge>
+                </td>
+                <td className="px-3 py-2 font-mono tabular-nums text-ink">
+                  {formatSen(t.amount)}
+                </td>
+                <td className="px-3 py-2 text-ink">{t.category ?? '—'}</td>
+                <td className="px-3 py-2 text-muted">{t.note ?? ''}</td>
+                <td className="px-3 py-2">
+                  <div className="flex justify-end gap-1">
+                    <IconButton label="Edit" onClick={() => openEdit(t)}>
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton
+                      label="Delete"
+                      variant="destructive"
+                      onClick={() => remove(t.id)}
+                    >
+                      <TrashIcon />
+                    </IconButton>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        <p>
-          Page {page} of {pages} ({total} transactions){' '}
-          <button disabled={page <= 1} onClick={() => setPage(page - 1)}>
-            Prev
-          </button>{' '}
-          <button disabled={page >= pages} onClick={() => setPage(page + 1)}>
-            Next
-          </button>
-        </p>
-      </section>
-    </main>
+      </div>
+
+      <div className="mt-4 flex items-center justify-between text-xs text-muted">
+        <span>{total} transactions</span>
+        <Pagination page={page} pageCount={pages} onChange={setPage} />
+      </div>
+
+      <Drawer
+        open={drawerOpen}
+        title={editing ? 'Edit transaction' : 'Add transaction'}
+        onClose={() => setDrawerOpen(false)}
+      >
+        <form onSubmit={submit} className="flex flex-col gap-4">
+          {editing ? (
+            <p className="text-xs text-muted">
+              {TYPE_LABELS[editing.type]} on {editing.date.slice(0, 10)}
+            </p>
+          ) : (
+            <Select
+              id="type"
+              label="Type"
+              value={type}
+              onChange={(e) => {
+                setType(e.target.value as TransactionType);
+                setLinkedEntityId('');
+              }}
+            >
+              {Object.entries(TYPE_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </Select>
+          )}
+          <Input
+            id="amount"
+            label="Amount (RM)"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            required
+          />
+          {!editing && (
+            <>
+              <Input
+                id="date"
+                label="Date"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+              />
+              {needsAccount && (
+                <Select
+                  id="account"
+                  label="Account"
+                  value={accountId}
+                  onChange={(e) => setAccountId(e.target.value)}
+                  required
+                >
+                  <option value="">Select account…</option>
+                  {banks.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </Select>
+              )}
+              {needsToAccount && (
+                <Select
+                  id="toAccount"
+                  label="To account"
+                  value={toAccountId}
+                  onChange={(e) => setToAccountId(e.target.value)}
+                  required
+                >
+                  <option value="">To account…</option>
+                  {banks
+                    .filter((b) => b.id !== accountId)
+                    .map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name}
+                      </option>
+                    ))}
+                </Select>
+              )}
+              {needsCategory && (
+                <Select
+                  id="category"
+                  label="Category"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                >
+                  {EXPENSE_CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </Select>
+              )}
+              {linkedOptions.length > 0 && (
+                <Select
+                  id="linkedEntity"
+                  label="Linked to"
+                  value={linkedEntityId}
+                  onChange={(e) => setLinkedEntityId(e.target.value)}
+                  required
+                >
+                  <option value="">Select…</option>
+                  {linkedOptions.map(([id, name]) => (
+                    <option key={id} value={id}>
+                      {name}
+                    </option>
+                  ))}
+                </Select>
+              )}
+              <Input
+                id="note"
+                label="Note (optional)"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+              />
+            </>
+          )}
+          <Button type="submit" className="w-full">
+            {editing ? 'Save' : 'Add'}
+          </Button>
+        </form>
+      </Drawer>
+    </div>
   );
 }
