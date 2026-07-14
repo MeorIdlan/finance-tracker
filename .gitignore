@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+coverage/
+*.tsbuildinfo
+.vite/
+.worktrees/
+.playwright-mcp/
+.superpowers/

@@ -1016,6 +1016,11 @@ export class EmailService {
 
   async sendOtpEmail(to: string, code: string): Promise<void> {
     await this.reserveQuotaSlot();
+    if (process.env.NODE_ENV !== 'production') {
+      // Lets a dev server (or a scripted e2e check driving the browser)
+      // read the code from stdout instead of a real inbox.
+      console.log(`[dev] OTP for ${to}: ${code}`);
+    }
     const params = new EmailParams()
       .setFrom(new Sender(this.from, 'Finance Tracker'))
       .setTo([new Recipient(to)])
@@ -3345,7 +3350,9 @@ Expected: build clean, api tests still PASS.
 
 1. Start Mongo (`docker compose up -d mongo` once Task 15 lands, or a local instance).
 2. `npm run start:dev --workspace server` and `npm run dev --workspace client`.
-3. Visit `http://localhost:5173/register`, register with a real email (or temporarily log the OTP server-side), enter the code, create a passkey (Chrome DevTools → WebAuthn tab → "Enable virtual authenticator environment" works without hardware).
+3. Visit `http://localhost:5173/register`, register with a real email (or read the dev-mode OTP log added in Task 5), enter the code, create a passkey (Chrome DevTools → WebAuthn tab → "Enable virtual authenticator environment" works without hardware).
+
+This is a quick sanity check before Settings/Dashboard exist; the scripted, full end-to-end version (Playwright MCP driving the browser, virtual authenticator via CDP) is Task 15 Step 4, once the whole flow is wired up.
 4. Confirm you land on `/dashboard` and `document.cookie` does NOT show `sid` (httpOnly).
 
 If Mongo is not available yet, defer this step to Task 15 Step 4 — it repeats there.
@@ -3617,9 +3624,21 @@ Expected: mongo service `running`.
 Run: `npm test --workspace server`
 Expected: full suite PASS (uses memory server, unaffected — this is the final regression check).
 
-- [ ] **Step 4: Full-flow manual smoke test**
+- [ ] **Step 4: Full-flow e2e verification (Playwright MCP)**
 
-With mongo, server, and client all running (README steps): register → OTP → passkey → dashboard → settings (add/remove passkey, audit list) → logout → login → recover. Use Chrome's virtual authenticator if no platform authenticator is handy.
+With mongo, server, and client all running (README steps), drive the full auth flow through a real browser using the Playwright MCP tools instead of testing it by hand. The server's dev-mode OTP log (added in Task 5) stands in for a real inbox; read the code from the `start:dev` terminal output.
+
+1. `browser_navigate` to `http://localhost:5173/register`.
+2. Attach a virtual WebAuthn authenticator before any ceremony can fire, via `browser_run_code_unsafe` opening a CDP session on the page and calling `WebAuthn.enable` then `WebAuthn.addVirtualAuthenticator` with `{ protocol: 'ctap2', transport: 'internal', hasResidentKey: true, hasUserVerification: true, isUserVerified: true, automaticPresenceSimulation: true }`. This auto-approves every subsequent `navigator.credentials.create`/`.get()` call — no hardware or manual tap needed.
+3. `browser_type`/`browser_fill_form` the email, submit; read the OTP from the server log; fill and submit it.
+4. Trigger passkey creation on `/register/passkey`; the virtual authenticator approves it automatically. `browser_snapshot` to confirm landing on `/dashboard`.
+5. `browser_evaluate` `document.cookie` and assert it does **not** contain `sid` (proves `httpOnly`).
+6. Navigate to `/settings`; assert the new passkey is listed and the audit log shows `auth.otp_requested`, `auth.registered`, `passkey.added`.
+7. Click logout; assert redirect to `/login`.
+8. Log back in (email + the same virtual passkey); assert `/dashboard` again and an `auth.login` audit entry.
+9. Go to `/recover`, submit the email, read the new OTP from the server log, verify it, register a second passkey; assert `/settings` now lists two passkeys.
+
+If Playwright MCP isn't available in the environment, fall back to the manual version: register with a real email (or read the dev OTP log directly), enter the code, create a passkey via Chrome DevTools' virtual authenticator, and walk the same flow by hand.
 
 - [ ] **Step 5: Commit**
 
@@ -3635,3 +3654,31 @@ git commit -m "chore: add dev docker-compose (mongo) and README quickstart"
 - Financial entities, transactions, balances → Plan 2.
 - Dashboard widgets/charts, production Dockerfiles, nginx, Cloudflare Tunnel → Plan 3.
 - Email reminders, amortization, multi-currency → out of scope for v1 entirely (see spec §8).
+
+## Implementation Status
+
+Plan 1 is complete: all 15 tasks implemented, task-reviewed, and merged into `dev`.
+Full auth stack verified via automated suite (10 suites / 30 tests) and a live
+Playwright e2e run against real dev servers and a real MailerSend send.
+
+### Final Review Follow-ups (non-blocking, deferred)
+
+Raised in the final whole-branch review; no Critical/Important findings beyond the
+bugs already fixed per-task (email-quota month-rollover race, OTP-duplication race,
+and a 404-vs-400 check-order fix in `PasskeysController`). These four are logged for
+future work, not fixed as part of Plan 1:
+
+1. **No rate limiting on unauthenticated `register`/`recover` endpoints** — a
+   self-inflicted-DoS risk via email quota exhaustion (an attacker can spam OTP
+   requests to burn the monthly MailerSend quota). Acceptable for a self-hosted v1;
+   add rate limiting in a follow-up.
+2. **`AuditModule` <-> `AuthModule` `forwardRef` cycle** — correctly implemented but
+   avoidable with a cleaner module split (e.g. extracting a shared audit-emitting
+   interface). Not blocking.
+3. **Session cookie `maxAge` always uses `SESSION_TTL_DAYS` (30d)**, even for
+   15-minute `pending_passkey` sessions — cosmetic only; the server-side session TTL
+   is enforced correctly regardless of the cookie's advertised `maxAge`.
+4. **`recover`/`login` email-enumeration disclosure** — response shape/timing can
+   reveal whether an email is registered. This matches the spec's own accepted v1
+   trade-off (§3, "Never return whether an email exists... accepted v1 trade-off,
+   self-hosted app"); informational only, not a new issue.

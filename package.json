@@ -1,0 +1,10 @@
+{
+  "name": "finance-tracker",
+  "private": true,
+  "workspaces": ["shared", "server", "client"],
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build:shared": "npm run build --workspace shared",
+    "test": "npm run test --workspace server"
+  }
+}
