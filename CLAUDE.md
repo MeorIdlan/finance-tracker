@@ -51,6 +51,10 @@ Registration/login/recovery is a multi-step flow (email OTP → passkey ceremony
 
 **Audit log** (`server/src/audit/`) captures both financial mutations and auth events; call `AuditService.log()` at the point of mutation rather than reconstructing history later.
 
+## Testing new features
+
+When adding a new feature to the webapp (new page, new UI flow, new interactive behavior), use the Playwright MCP tools to drive the running dev app and visually confirm the feature landed correctly — navigate to it, exercise the golden path, and take a screenshot before considering the work done. This is in addition to, not a replacement for, unit/e2e tests.
+
 ## Environment / deployment shape
 
 Dev: client (Vite, :5173) proxies `/api` to server (:3000) so cookies/WebAuthn see one origin. Prod (`docker-compose.prod.yml`): nginx `client` container serves built static assets and reverse-proxies `/api` to `server`; `cloudflared` tunnels HTTPS from Cloudflare's edge to the droplet, terminating TLS there — `WEBAUTHN_RP_ID`/`WEBAUTHN_ORIGIN` must match the public hostname exactly or passkey ceremonies fail. Mongo always runs as a single-node replica set (`rs0`) because multi-document transactions require it, in both dev and prod compose files.
