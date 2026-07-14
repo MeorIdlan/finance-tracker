@@ -4,6 +4,9 @@ import { startRegistration } from '@simplewebauthn/browser';
 import type { PublicKeyCredentialCreationOptionsJSON } from '@simplewebauthn/browser';
 import { PasskeySummary } from '@finance/shared';
 import { api, ApiError } from '../api';
+import Button from '../components/Button';
+import IconButton from '../components/IconButton';
+import { TrashIcon } from '../components/icons';
 
 interface AuditItem {
   action: string;
@@ -57,35 +60,62 @@ export default function SettingsPage() {
   }
 
   return (
-    <main>
-      <h1>Settings</h1>
-      <Link to="/dashboard">Back to dashboard</Link>
-      {error && <p role="alert">{error}</p>}
+    <div>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-lg font-semibold">Settings</h1>
+        <Link to="/dashboard" className="text-xs text-accent hover:underline">
+          Back to dashboard
+        </Link>
+      </div>
+      {error && (
+        <p role="alert" className="mb-4 text-sm text-danger">
+          {error}
+        </p>
+      )}
 
-      <section>
-        <h2>Passkeys</h2>
-        <ul>
+      <section className="mb-8">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-xs font-medium uppercase tracking-wide text-muted">
+            Passkeys
+          </h2>
+          <Button onClick={addPasskey}>+ Add a passkey</Button>
+        </div>
+        <ul className="divide-y divide-border rounded-lg border border-border">
           {passkeys.map((p) => (
-            <li key={p.id}>
-              {p.deviceLabel} — added{' '}
-              {new Date(p.createdAt).toLocaleDateString()}{' '}
-              <button onClick={() => removePasskey(p.id)}>Remove</button>
+            <li key={p.id} className="flex items-center justify-between px-4 py-3">
+              <div className="text-sm text-ink">
+                {p.deviceLabel}{' '}
+                <span className="text-muted">
+                  — added {new Date(p.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+              <IconButton
+                label="Remove"
+                variant="destructive"
+                onClick={() => removePasskey(p.id)}
+              >
+                <TrashIcon />
+              </IconButton>
             </li>
           ))}
         </ul>
-        <button onClick={addPasskey}>Add a passkey</button>
       </section>
 
       <section>
-        <h2>Recent activity</h2>
-        <ul>
+        <h2 className="mb-3 text-xs font-medium uppercase tracking-wide text-muted">
+          Recent activity
+        </h2>
+        <ul className="divide-y divide-border rounded-lg border border-border">
           {audit.map((a, i) => (
-            <li key={i}>
-              {new Date(a.timestamp).toLocaleString()} — {a.action}
+            <li key={i} className="px-4 py-2 text-sm">
+              <span className="font-mono text-xs tabular-nums text-muted">
+                {new Date(a.timestamp).toLocaleString()}
+              </span>{' '}
+              <span className="text-ink">{a.action}</span>
             </li>
           ))}
         </ul>
       </section>
-    </main>
+    </div>
   );
 }
