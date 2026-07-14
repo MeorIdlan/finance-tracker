@@ -85,7 +85,7 @@ export default function DashboardPage() {
       <h1 className="mb-6 text-lg font-semibold">Dashboard</h1>
 
       {/* 1. Net worth stat tiles */}
-      <section className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <section className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="rounded-lg border border-border bg-surface p-4">
           <div className="text-xs text-muted">Net worth</div>
           <div className="font-mono text-2xl font-semibold tabular-nums text-white">
@@ -167,7 +167,7 @@ export default function DashboardPage() {
                       {STATUS_LABEL[b.status]}
                     </Badge>{' '}
                     <span className="text-ink">{b.name}</span>{' '}
-                    <span className="text-muted">{b.dueDate.slice(0, 10)}</span>
+                    <span className="font-mono text-xs tabular-nums text-muted">{b.dueDate.slice(0, 10)}</span>
                   </span>
                   <span className="font-mono tabular-nums text-ink">
                     {formatSen(b.amount)}
