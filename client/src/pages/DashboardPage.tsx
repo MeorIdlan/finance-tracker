@@ -8,6 +8,7 @@ import {
   DashboardSummary,
   MonthPoint,
   TransactionDto,
+  TransactionType,
   UpcomingBill,
 } from '@finance/shared';
 import { api } from '../api';
@@ -46,6 +47,16 @@ const STATUS_TONE = {
   upcoming: 'muted',
 } as const;
 
+const TYPE_LABELS: Record<TransactionType, string> = {
+  income: 'Income',
+  expense: 'Expense',
+  commitmentPayment: 'Commitment payment',
+  loanPayment: 'Loan payment',
+  cardPayment: 'Credit card payment',
+  cardCharge: 'Credit card charge',
+  transfer: 'Transfer',
+};
+
 export default function DashboardPage() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [netWorthTrend, setNetWorthTrend] = useState<MonthPoint[]>([]);
@@ -78,7 +89,7 @@ export default function DashboardPage() {
     void load();
   }, [load]);
 
-  if (!summary) return <main className="text-sm text-muted">Loading…</main>;
+  if (!summary) return <div className="text-sm text-muted">Loading…</div>;
 
   return (
     <div>
@@ -295,7 +306,9 @@ export default function DashboardPage() {
                   <td className="px-3 py-2 font-mono text-xs tabular-nums text-muted">
                     {t.date.slice(0, 10)}
                   </td>
-                  <td className="px-3 py-2 text-ink">{t.type}</td>
+                  <td className="px-3 py-2">
+                    <Badge tone="accent">{TYPE_LABELS[t.type]}</Badge>
+                  </td>
                   <td className="px-3 py-2 font-mono tabular-nums text-ink">
                     {formatSen(t.amount)}
                   </td>

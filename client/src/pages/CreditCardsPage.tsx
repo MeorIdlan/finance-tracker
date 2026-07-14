@@ -75,10 +75,21 @@ export default function CreditCardsPage() {
           <li key={c.id} className="flex items-center justify-between px-4 py-3">
             <div>
               <div className="text-sm text-ink">{c.name}</div>
-              <div className="font-mono text-sm tabular-nums text-muted">
-                statement {formatSen(c.statementBalance)} (due day {c.dueDay}),
-                current {formatSen(c.currentBalance)} of{' '}
-                {formatSen(c.creditLimit)} limit
+              <div className="text-sm text-muted">
+                statement{' '}
+                <span className="font-mono tabular-nums">
+                  {formatSen(c.statementBalance)}
+                </span>{' '}
+                (due day <span className="font-mono tabular-nums">{c.dueDay}</span>),
+                current{' '}
+                <span className="font-mono tabular-nums">
+                  {formatSen(c.currentBalance)}
+                </span>{' '}
+                of{' '}
+                <span className="font-mono tabular-nums">
+                  {formatSen(c.creditLimit)}
+                </span>{' '}
+                limit
               </div>
             </div>
             <IconButton

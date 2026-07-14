@@ -179,6 +179,7 @@ export default function TransactionsPage() {
             setFilterType(e.target.value);
           }}
           className="w-auto"
+          aria-label="Filter by type"
         >
           <option value="">All types</option>
           {Object.entries(TYPE_LABELS).map(([value, label]) => (

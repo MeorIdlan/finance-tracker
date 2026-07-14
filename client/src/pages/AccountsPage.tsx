@@ -223,8 +223,14 @@ export default function AccountsPage() {
                 <div className="text-sm text-ink">
                   {s.name} <span className="text-muted">({s.type})</span>
                 </div>
-                <div className="font-mono text-sm tabular-nums text-muted">
-                  {s.latestValue === null ? 'no value yet' : formatSen(s.latestValue)}
+                <div className="text-sm text-muted">
+                  {s.latestValue === null ? (
+                    'no value yet'
+                  ) : (
+                    <span className="font-mono tabular-nums">
+                      {formatSen(s.latestValue)}
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-1">

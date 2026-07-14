@@ -84,9 +84,16 @@ export default function LoansPage() {
             <li key={l.id} className="flex items-center justify-between px-4 py-3">
               <div>
                 <div className="text-sm text-ink">{l.name}</div>
-                <div className="font-mono text-sm tabular-nums text-muted">
-                  {formatSen(l.currentBalance)} remaining of{' '}
-                  {formatSen(l.principal)} ({paidPct}% paid, {l.interestRate}% p.a.)
+                <div className="text-sm text-muted">
+                  <span className="font-mono tabular-nums">
+                    {formatSen(l.currentBalance)}
+                  </span>{' '}
+                  remaining of{' '}
+                  <span className="font-mono tabular-nums">
+                    {formatSen(l.principal)}
+                  </span>{' '}
+                  (<span className="font-mono tabular-nums">{paidPct}%</span> paid,{' '}
+                  <span className="font-mono tabular-nums">{l.interestRate}%</span> p.a.)
                 </div>
               </div>
               <IconButton

@@ -99,8 +99,12 @@ export default function CommitmentsPage() {
                 <Badge tone={STATUS_TONE[c.status]}>{STATUS_LABEL[c.status]}</Badge>
                 {!c.active && <Badge tone="muted">Inactive</Badge>}
               </div>
-              <div className="font-mono text-sm tabular-nums text-muted">
-                {formatSen(c.amount)} — due {c.nextDueDate.slice(0, 10)}
+              <div className="text-sm text-muted">
+                <span className="font-mono tabular-nums">{formatSen(c.amount)}</span>{' '}
+                — due{' '}
+                <span className="font-mono tabular-nums">
+                  {c.nextDueDate.slice(0, 10)}
+                </span>
               </div>
             </div>
             <div className="flex items-center gap-1">
