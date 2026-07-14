@@ -1,6 +1,9 @@
 import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, ApiError } from '../api';
+import AuthCard from '../components/AuthCard';
+import Button from '../components/Button';
+import Input from '../components/Input';
 
 export default function RecoverPage() {
   const [email, setEmail] = useState('');
@@ -23,24 +26,28 @@ export default function RecoverPage() {
   }
 
   return (
-    <main>
-      <h1>Recover your account</h1>
-      <p>We will email you a code, then you can register a new passkey.</p>
-      <form onSubmit={onSubmit}>
-        <label>
-          Email
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </label>
-        <button type="submit" disabled={busy}>
+    <AuthCard title="Recover your account">
+      <p className="mb-4 text-sm text-muted">
+        We will email you a code, then you can register a new passkey.
+      </p>
+      <form onSubmit={onSubmit} className="flex flex-col gap-4">
+        <Input
+          id="email"
+          label="Email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <Button type="submit" disabled={busy} className="w-full">
           Send recovery code
-        </button>
+        </Button>
       </form>
-      {error && <p role="alert">{error}</p>}
-    </main>
+      {error && (
+        <p role="alert" className="mt-3 text-sm text-danger">
+          {error}
+        </p>
+      )}
+    </AuthCard>
   );
 }

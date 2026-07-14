@@ -1,6 +1,9 @@
 import { FormEvent, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { api, ApiError } from '../api';
+import AuthCard from '../components/AuthCard';
+import Button from '../components/Button';
+import Input from '../components/Input';
 
 interface VerifyState {
   email: string;
@@ -35,26 +38,31 @@ export default function VerifyOtpPage() {
   }
 
   return (
-    <main>
-      <h1>Check your email</h1>
-      <p>We sent a 6-digit code to {state.email}.</p>
-      <form onSubmit={onSubmit}>
-        <label>
-          Code
-          <input
-            inputMode="numeric"
-            pattern="\d{6}"
-            maxLength={6}
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            required
-          />
-        </label>
-        <button type="submit" disabled={busy}>
+    <AuthCard title="Check your email">
+      <p className="mb-4 text-sm text-muted">
+        We sent a 6-digit code to {state.email}.
+      </p>
+      <form onSubmit={onSubmit} className="flex flex-col gap-4">
+        <Input
+          id="code"
+          label="Code"
+          inputMode="numeric"
+          pattern="\d{6}"
+          maxLength={6}
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          required
+          className="font-mono tracking-widest"
+        />
+        <Button type="submit" disabled={busy} className="w-full">
           Verify
-        </button>
+        </Button>
       </form>
-      {error && <p role="alert">{error}</p>}
-    </main>
+      {error && (
+        <p role="alert" className="mt-3 text-sm text-danger">
+          {error}
+        </p>
+      )}
+    </AuthCard>
   );
 }

@@ -4,6 +4,8 @@ import { startRegistration } from '@simplewebauthn/browser';
 import type { PublicKeyCredentialCreationOptionsJSON } from '@simplewebauthn/browser';
 import { api, ApiError } from '../api';
 import { useAuth } from '../auth-context';
+import AuthCard from '../components/AuthCard';
+import Button from '../components/Button';
 
 export default function PasskeyPage() {
   const [error, setError] = useState('');
@@ -38,13 +40,18 @@ export default function PasskeyPage() {
   }
 
   return (
-    <main>
-      <h1>Set up your passkey</h1>
-      <p>Your device will prompt you to create a passkey for this site.</p>
-      <button onClick={createPasskey} disabled={busy}>
+    <AuthCard title="Set up your passkey">
+      <p className="mb-4 text-sm text-muted">
+        Your device will prompt you to create a passkey for this site.
+      </p>
+      <Button onClick={createPasskey} disabled={busy} className="w-full">
         Create passkey
-      </button>
-      {error && <p role="alert">{error}</p>}
-    </main>
+      </Button>
+      {error && (
+        <p role="alert" className="mt-3 text-sm text-danger">
+          {error}
+        </p>
+      )}
+    </AuthCard>
   );
 }
