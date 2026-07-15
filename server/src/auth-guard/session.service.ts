@@ -13,6 +13,7 @@ export interface RequestUser {
   userId: string;
   scope: SessionScope;
   email: string;
+  renewed: boolean;
 }
 
 function hashToken(token: string): string {
@@ -53,6 +54,7 @@ export class SessionService {
     const user = await this.userModel.findById(session.userId);
     if (!user) return null;
 
+    let renewed = false;
     if (session.scope === 'full') {
       const remainingMs = session.expiresAt.getTime() - Date.now();
       if (remainingMs < this.fullTtlMs / 2) {
@@ -60,6 +62,7 @@ export class SessionService {
           { _id: session._id },
           { expiresAt: new Date(Date.now() + this.fullTtlMs) },
         );
+        renewed = true;
       }
     }
 
@@ -68,6 +71,7 @@ export class SessionService {
       userId: session.userId.toHexString(),
       scope: session.scope,
       email: user.email,
+      renewed,
     };
   }
 

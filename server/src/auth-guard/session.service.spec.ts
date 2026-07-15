@@ -80,8 +80,9 @@ describe('SessionService', () => {
         .findOne({ userId: user._id })
         .lean();
 
-      await service.validate(token);
+      const info = await service.validate(token);
 
+      expect(info!.renewed).toBe(false);
       const after = await sessionModel.findOne({ userId: user._id }).lean();
       expect(after!.expiresAt.getTime()).toBe(before!.expiresAt.getTime());
     });
@@ -100,8 +101,9 @@ describe('SessionService', () => {
         { expiresAt: staleExpiresAt },
       );
 
-      await service.validate(token);
+      const info = await service.validate(token);
 
+      expect(info!.renewed).toBe(true);
       const after = await sessionModel.findOne({ _id: doc!._id }).lean();
       expect(after!.expiresAt.getTime()).toBeGreaterThan(
         staleExpiresAt.getTime(),
@@ -124,8 +126,9 @@ describe('SessionService', () => {
         { expiresAt: nearExpiry },
       );
 
-      await service.validate(token);
+      const info = await service.validate(token);
 
+      expect(info!.renewed).toBe(false);
       const after = await sessionModel.findOne({ _id: doc!._id }).lean();
       expect(after!.expiresAt.getTime()).toBe(nearExpiry.getTime());
     });
