@@ -8,7 +8,12 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { EXPENSE_CATEGORIES, ExpenseCategory, TransactionType } from '@finance/shared';
+import {
+  EXPENSE_CATEGORIES,
+  ExpenseCategory,
+  SourceType,
+  TransactionType,
+} from '@finance/shared';
 
 const TYPES: TransactionType[] = [
   'income',
@@ -16,9 +21,10 @@ const TYPES: TransactionType[] = [
   'commitmentPayment',
   'loanPayment',
   'cardPayment',
-  'cardCharge',
   'transfer',
 ];
+
+const SOURCE_TYPES: SourceType[] = ['bankAccount', 'creditCard'];
 
 export class CreateTransactionDto {
   @IsIn(TYPES)
@@ -35,9 +41,11 @@ export class CreateTransactionDto {
   @IsIn(EXPENSE_CATEGORIES)
   category?: ExpenseCategory;
 
-  @IsOptional()
+  @IsIn(SOURCE_TYPES)
+  sourceType: SourceType;
+
   @IsMongoId()
-  accountId?: string;
+  sourceId: string;
 
   @IsOptional()
   @IsMongoId()
@@ -84,7 +92,7 @@ export class ListTransactionsQuery {
 
   @IsOptional()
   @IsMongoId()
-  accountId?: string;
+  sourceId?: string;
 
   @IsOptional()
   @IsDateString()

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Connection, Model, Types } from 'mongoose';
-import { Paginated, TransactionDto } from '@finance/shared';
+import { Paginated, TransactionDto, TransactionType } from '@finance/shared';
 import {
   Transaction,
   TransactionDocument,
@@ -21,6 +21,12 @@ import {
   ListTransactionsQuery,
   UpdateTransactionDto,
 } from './dto';
+
+const CARD_SOURCE_ALLOWED = new Set<TransactionType>([
+  'expense',
+  'commitmentPayment',
+  'loanPayment',
+]);
 
 @Injectable()
 export class TransactionsService {
@@ -45,7 +51,8 @@ export class TransactionsService {
       amount: doc.amount,
       date: doc.date.toISOString(),
       category: doc.category,
-      accountId: doc.accountId?.toHexString(),
+      sourceType: doc.sourceType,
+      sourceId: doc.sourceId.toHexString(),
       toAccountId: doc.toAccountId?.toHexString(),
       linkedEntityId: doc.linkedEntityId?.toHexString(),
       note: doc.note,
@@ -63,11 +70,15 @@ export class TransactionsService {
     userId: string,
     dto: CreateTransactionDto,
   ): Promise<void> {
-    if (dto.type !== 'cardCharge') {
-      if (!dto.accountId) {
-        throw new BadRequestException('accountId is required for this type.');
+    if (dto.sourceType === 'creditCard') {
+      if (!CARD_SOURCE_ALLOWED.has(dto.type)) {
+        throw new BadRequestException(
+          'A credit card cannot be the source for this transaction type.',
+        );
       }
-      await this.bankAccounts.mustOwn(userId, dto.accountId);
+      await this.cards.mustOwn(userId, dto.sourceId);
+    } else {
+      await this.bankAccounts.mustOwn(userId, dto.sourceId);
     }
     if (dto.type === 'expense' && !dto.category) {
       throw new BadRequestException('category is required for expenses.');
@@ -76,7 +87,7 @@ export class TransactionsService {
       if (!dto.toAccountId) {
         throw new BadRequestException('toAccountId is required for transfers.');
       }
-      if (dto.toAccountId === dto.accountId) {
+      if (dto.toAccountId === dto.sourceId) {
         throw new BadRequestException('Cannot transfer to the same account.');
       }
       await this.bankAccounts.mustOwn(userId, dto.toAccountId);
@@ -87,7 +98,7 @@ export class TransactionsService {
     if (dto.type === 'loanPayment') {
       await this.loans.mustOwn(userId, this.requireLink(dto));
     }
-    if (dto.type === 'cardPayment' || dto.type === 'cardCharge') {
+    if (dto.type === 'cardPayment') {
       await this.cards.mustOwn(userId, this.requireLink(dto));
     }
   }
@@ -98,25 +109,31 @@ export class TransactionsService {
     session: ClientSession,
   ): Promise<void> {
     const amt = sign * txn.amount;
-    const debitBank = () =>
-      this.bankModel.updateOne(
-        { _id: txn.accountId },
-        { $inc: { currentBalance: -amt } },
-        { session },
-      );
+    const debitSource = () =>
+      txn.sourceType === 'creditCard'
+        ? this.cardModel.updateOne(
+            { _id: txn.sourceId },
+            { $inc: { currentBalance: amt } },
+            { session },
+          )
+        : this.bankModel.updateOne(
+            { _id: txn.sourceId },
+            { $inc: { currentBalance: -amt } },
+            { session },
+          );
     switch (txn.type) {
       case 'income':
         await this.bankModel.updateOne(
-          { _id: txn.accountId },
+          { _id: txn.sourceId },
           { $inc: { currentBalance: amt } },
           { session },
         );
         break;
       case 'expense':
-        await debitBank();
+        await debitSource();
         break;
       case 'commitmentPayment': {
-        await debitBank();
+        await debitSource();
         const c = await this.commitmentModel
           .findById(txn.linkedEntityId)
           .session(session);
@@ -127,7 +144,7 @@ export class TransactionsService {
         break;
       }
       case 'loanPayment':
-        await debitBank();
+        await debitSource();
         await this.loanModel.updateOne(
           { _id: txn.linkedEntityId },
           { $inc: { currentBalance: -amt } },
@@ -135,22 +152,15 @@ export class TransactionsService {
         );
         break;
       case 'cardPayment':
-        await debitBank();
+        await debitSource();
         await this.cardModel.updateOne(
           { _id: txn.linkedEntityId },
           { $inc: { currentBalance: -amt, statementBalance: -amt } },
           { session },
         );
         break;
-      case 'cardCharge':
-        await this.cardModel.updateOne(
-          { _id: txn.linkedEntityId },
-          { $inc: { currentBalance: amt } },
-          { session },
-        );
-        break;
       case 'transfer':
-        await debitBank();
+        await debitSource();
         await this.bankModel.updateOne(
           { _id: txn.toAccountId },
           { $inc: { currentBalance: amt } },
@@ -177,9 +187,8 @@ export class TransactionsService {
               amount: dto.amount,
               date: new Date(dto.date),
               category: dto.category,
-              accountId: dto.accountId
-                ? new Types.ObjectId(dto.accountId)
-                : undefined,
+              sourceType: dto.sourceType,
+              sourceId: new Types.ObjectId(dto.sourceId),
               toAccountId: dto.toAccountId
                 ? new Types.ObjectId(dto.toAccountId)
                 : undefined,
@@ -275,9 +284,9 @@ export class TransactionsService {
     };
     if (q.type) filter.type = q.type;
     if (q.category) filter.category = q.category;
-    if (q.accountId) {
-      const oid = new Types.ObjectId(q.accountId);
-      filter.$or = [{ accountId: oid }, { toAccountId: oid }];
+    if (q.sourceId) {
+      const oid = new Types.ObjectId(q.sourceId);
+      filter.$or = [{ sourceId: oid }, { toAccountId: oid }];
     }
     if (q.from || q.to) {
       filter.date = {

@@ -27,7 +27,13 @@ describe('balance recompute', () => {
     await request(server)
       .post('/api/transactions')
       .set('Cookie', cookie)
-      .send({ type: 'income', amount: 50000, date: '2026-07-01', accountId });
+      .send({
+        type: 'income',
+        amount: 50000,
+        date: '2026-07-01',
+        sourceType: 'bankAccount',
+        sourceId: accountId,
+      });
     await request(server)
       .post('/api/transactions')
       .set('Cookie', cookie)
@@ -35,7 +41,8 @@ describe('balance recompute', () => {
         type: 'expense',
         amount: 20000,
         date: '2026-07-02',
-        accountId,
+        sourceType: 'bankAccount',
+        sourceId: accountId,
         category: 'Bills',
       });
   });

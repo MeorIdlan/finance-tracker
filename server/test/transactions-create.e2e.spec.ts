@@ -67,7 +67,13 @@ describe('transaction creation effects', () => {
     await request(ctx.app.getHttpServer())
       .post('/api/transactions')
       .set('Cookie', cookie)
-      .send({ type: 'income', amount: 300000, date: '2026-07-01', accountId })
+      .send({
+        type: 'income',
+        amount: 300000,
+        date: '2026-07-01',
+        sourceType: 'bankAccount',
+        sourceId: accountId,
+      })
       .expect(201);
     const banks = await getBank(ctx, cookie);
     expect(banks.find((b: { id: string }) => b.id === accountId).currentBalance).toBe(
@@ -79,7 +85,13 @@ describe('transaction creation effects', () => {
     await request(ctx.app.getHttpServer())
       .post('/api/transactions')
       .set('Cookie', cookie)
-      .send({ type: 'expense', amount: 5000, date: '2026-07-02', accountId })
+      .send({
+        type: 'expense',
+        amount: 5000,
+        date: '2026-07-02',
+        sourceType: 'bankAccount',
+        sourceId: accountId,
+      })
       .expect(400);
     await request(ctx.app.getHttpServer())
       .post('/api/transactions')
@@ -88,7 +100,8 @@ describe('transaction creation effects', () => {
         type: 'expense',
         amount: 5000,
         date: '2026-07-02',
-        accountId,
+        sourceType: 'bankAccount',
+        sourceId: accountId,
         category: 'Food',
       })
       .expect(201);
@@ -106,7 +119,8 @@ describe('transaction creation effects', () => {
         type: 'transfer',
         amount: 100000,
         date: '2026-07-03',
-        accountId,
+        sourceType: 'bankAccount',
+        sourceId: accountId,
         toAccountId,
       })
       .expect(201);
@@ -132,7 +146,8 @@ describe('transaction creation effects', () => {
         type: 'commitmentPayment',
         amount: 150000,
         date: '2026-07-01',
-        accountId,
+        sourceType: 'bankAccount',
+        sourceId: accountId,
         linkedEntityId: commitmentId,
       })
       .expect(201);
@@ -152,7 +167,8 @@ describe('transaction creation effects', () => {
         type: 'loanPayment',
         amount: 80000,
         date: '2026-07-05',
-        accountId,
+        sourceType: 'bankAccount',
+        sourceId: accountId,
         linkedEntityId: loanId,
       })
       .expect(201);
@@ -162,16 +178,18 @@ describe('transaction creation effects', () => {
     expect(loans.body[0].currentBalance).toBe(4920000);
   });
 
-  it('cardCharge raises card balance; cardPayment lowers it and the bank', async () => {
+  it('a creditCard-sourced expense raises the card balance; cardPayment lowers it and the bank', async () => {
     const server = ctx.app.getHttpServer();
     await request(server)
       .post('/api/transactions')
       .set('Cookie', cookie)
       .send({
-        type: 'cardCharge',
+        type: 'expense',
         amount: 20000,
         date: '2026-07-06',
-        linkedEntityId: cardId,
+        sourceType: 'creditCard',
+        sourceId: cardId,
+        category: 'Shopping',
       })
       .expect(201);
     await request(server)
@@ -181,7 +199,8 @@ describe('transaction creation effects', () => {
         type: 'cardPayment',
         amount: 15000,
         date: '2026-07-07',
-        accountId,
+        sourceType: 'bankAccount',
+        sourceId: accountId,
         linkedEntityId: cardId,
       })
       .expect(201);
@@ -189,6 +208,63 @@ describe('transaction creation effects', () => {
       .get('/api/credit-cards')
       .set('Cookie', cookie);
     expect(cards.body[0].currentBalance).toBe(5000);
+  });
+
+  it('rejects a creditCard source for types that must be paid from a bank account', async () => {
+    const server = ctx.app.getHttpServer();
+    await request(server)
+      .post('/api/transactions')
+      .set('Cookie', cookie)
+      .send({
+        type: 'income',
+        amount: 1000,
+        date: '2026-07-10',
+        sourceType: 'creditCard',
+        sourceId: cardId,
+      })
+      .expect(400);
+    await request(server)
+      .post('/api/transactions')
+      .set('Cookie', cookie)
+      .send({
+        type: 'cardPayment',
+        amount: 1000,
+        date: '2026-07-10',
+        sourceType: 'creditCard',
+        sourceId: cardId,
+        linkedEntityId: cardId,
+      })
+      .expect(400);
+  });
+
+  it('a commitmentPayment sourced from a credit card charges the card, not the bank', async () => {
+    const server = ctx.app.getHttpServer();
+    const cardBefore = (
+      await request(server).get('/api/credit-cards').set('Cookie', cookie)
+    ).body[0].currentBalance;
+    const bankBefore = (await getBank(ctx, cookie)).find(
+      (b: { id: string }) => b.id === accountId,
+    ).currentBalance;
+    await request(server)
+      .post('/api/transactions')
+      .set('Cookie', cookie)
+      .send({
+        type: 'commitmentPayment',
+        amount: 30000,
+        date: '2026-07-11',
+        sourceType: 'creditCard',
+        sourceId: cardId,
+        linkedEntityId: commitmentId,
+      })
+      .expect(201);
+    const cardAfter = (
+      await request(server).get('/api/credit-cards').set('Cookie', cookie)
+    ).body[0].currentBalance;
+    expect(cardAfter).toBe(cardBefore + 30000);
+    const bankAfter = (await getBank(ctx, cookie)).find(
+      (b: { id: string }) => b.id === accountId,
+    ).currentBalance;
+    expect(bankAfter).toBe(bankBefore);
   });
 
   it('rejects transfers to the same account', async () => {
@@ -199,7 +275,8 @@ describe('transaction creation effects', () => {
         type: 'transfer',
         amount: 1,
         date: '2026-07-08',
-        accountId,
+        sourceType: 'bankAccount',
+        sourceId: accountId,
         toAccountId: accountId,
       })
       .expect(400);
@@ -210,7 +287,13 @@ describe('transaction creation effects', () => {
     await request(ctx.app.getHttpServer())
       .post('/api/transactions')
       .set('Cookie', other.cookie)
-      .send({ type: 'income', amount: 1, date: '2026-07-09', accountId })
+      .send({
+        type: 'income',
+        amount: 1,
+        date: '2026-07-09',
+        sourceType: 'bankAccount',
+        sourceId: accountId,
+      })
       .expect(404);
   });
 });

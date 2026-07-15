@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import { ExpenseCategory, TransactionType } from '@finance/shared';
+import { ExpenseCategory, SourceType, TransactionType } from '@finance/shared';
 
 export type TransactionDocument = HydratedDocument<Transaction>;
 
@@ -10,9 +10,10 @@ const TYPES: TransactionType[] = [
   'commitmentPayment',
   'loanPayment',
   'cardPayment',
-  'cardCharge',
   'transfer',
 ];
+
+const SOURCE_TYPES: SourceType[] = ['bankAccount', 'creditCard'];
 
 @Schema()
 export class Transaction {
@@ -31,8 +32,11 @@ export class Transaction {
   @Prop()
   category?: ExpenseCategory;
 
-  @Prop({ type: Types.ObjectId })
-  accountId?: Types.ObjectId;
+  @Prop({ required: true, enum: SOURCE_TYPES })
+  sourceType: SourceType;
+
+  @Prop({ type: Types.ObjectId, required: true })
+  sourceId: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId })
   toAccountId?: Types.ObjectId;

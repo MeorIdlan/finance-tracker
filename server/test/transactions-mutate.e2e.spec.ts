@@ -43,7 +43,8 @@ describe('transaction update/delete/list', () => {
           type: 'expense',
           amount: 10000,
           date: '2026-07-01',
-          accountId,
+          sourceType: 'bankAccount',
+          sourceId: accountId,
           category: 'Food',
         })
     ).body;
@@ -73,7 +74,13 @@ describe('transaction update/delete/list', () => {
     await request(server)
       .post('/api/transactions')
       .set('Cookie', cookie)
-      .send({ type: 'income', amount: 1000, date: '2026-06-01', accountId });
+      .send({
+        type: 'income',
+        amount: 1000,
+        date: '2026-06-01',
+        sourceType: 'bankAccount',
+        sourceId: accountId,
+      });
     await request(server)
       .post('/api/transactions')
       .set('Cookie', cookie)
@@ -81,7 +88,8 @@ describe('transaction update/delete/list', () => {
         type: 'expense',
         amount: 500,
         date: '2026-07-05',
-        accountId,
+        sourceType: 'bankAccount',
+        sourceId: accountId,
         category: 'Transport',
       });
     await request(server)
@@ -91,7 +99,8 @@ describe('transaction update/delete/list', () => {
         type: 'expense',
         amount: 700,
         date: '2026-07-06',
-        accountId,
+        sourceType: 'bankAccount',
+        sourceId: accountId,
         category: 'Food',
       });
 

@@ -86,7 +86,8 @@ describe('bank accounts', () => {
       type: 'income',
       amount: 1000,
       date: new Date(),
-      accountId: new Types.ObjectId(id),
+      sourceType: 'bankAccount',
+      sourceId: new Types.ObjectId(id),
     });
     await request(ctx.app.getHttpServer())
       .delete(`/api/accounts/bank/${id}`)

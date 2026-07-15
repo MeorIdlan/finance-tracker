@@ -91,7 +91,7 @@ export class BankAccountsService {
     const doc = await this.mustOwn(userId, id);
     const inUse = await this.txnModel.exists({
       userId: new Types.ObjectId(userId),
-      $or: [{ accountId: doc._id }, { toAccountId: doc._id }],
+      $or: [{ sourceId: doc._id }, { toAccountId: doc._id }],
     });
     if (inUse) {
       throw new ConflictException(
@@ -115,14 +115,14 @@ export class BankAccountsService {
     const acc = await this.mustOwn(userId, id);
     const txns = await this.txnModel.find({
       userId: new Types.ObjectId(userId),
-      $or: [{ accountId: acc._id }, { toAccountId: acc._id }],
+      $or: [{ sourceId: acc._id }, { toAccountId: acc._id }],
     });
     let balance = acc.openingBalance;
     for (const t of txns) {
       if (t.toAccountId?.equals(acc._id) && t.type === 'transfer') {
         balance += t.amount;
       }
-      if (t.accountId?.equals(acc._id)) {
+      if (t.sourceId.equals(acc._id)) {
         balance += t.type === 'income' ? t.amount : -t.amount;
       }
     }
