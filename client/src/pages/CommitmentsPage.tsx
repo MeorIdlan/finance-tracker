@@ -28,6 +28,7 @@ export default function CommitmentsPage() {
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [dueDay, setDueDay] = useState('1');
+  const [alreadyPaid, setAlreadyPaid] = useState(false);
 
   const load = useCallback(async () => {
     setItems(await api<CommitmentDto[]>('/commitments'));
@@ -45,11 +46,17 @@ export default function CommitmentsPage() {
     try {
       await api('/commitments', {
         method: 'POST',
-        body: { name, amount: sen, dueDayOfMonth: parseInt(dueDay, 10) },
+        body: {
+          name,
+          amount: sen,
+          dueDayOfMonth: parseInt(dueDay, 10),
+          alreadyPaidThisPeriod: alreadyPaid,
+        },
       });
       setName('');
       setAmount('');
       setDueDay('1');
+      setAlreadyPaid(false);
       setDrawerOpen(false);
       await load();
     } catch (err) {
@@ -153,6 +160,15 @@ export default function CommitmentsPage() {
             onChange={(e) => setDueDay(e.target.value)}
             required
           />
+          <label className="flex items-center gap-2 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={alreadyPaid}
+              onChange={(e) => setAlreadyPaid(e.target.checked)}
+              className="h-4 w-4 rounded border-border"
+            />
+            I've already paid this month
+          </label>
           <Button type="submit" className="w-full">
             Add commitment
           </Button>
