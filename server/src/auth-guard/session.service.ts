@@ -52,6 +52,17 @@ export class SessionService {
     if (!session) return null;
     const user = await this.userModel.findById(session.userId);
     if (!user) return null;
+
+    if (session.scope === 'full') {
+      const remainingMs = session.expiresAt.getTime() - Date.now();
+      if (remainingMs < this.fullTtlMs / 2) {
+        await this.sessionModel.updateOne(
+          { _id: session._id },
+          { expiresAt: new Date(Date.now() + this.fullTtlMs) },
+        );
+      }
+    }
+
     return {
       sessionId: session._id.toHexString(),
       userId: session.userId.toHexString(),
