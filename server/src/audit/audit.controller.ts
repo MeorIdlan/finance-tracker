@@ -1,7 +1,7 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../auth-guard/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
-import { RequestUser } from '../auth-guard/session.service';
+import { AuthenticatedUser } from '../auth-guard/session.service';
 import { AuditLogService } from './audit.service';
 
 @Controller('audit-log')
@@ -11,7 +11,7 @@ export class AuditController {
 
   @Get()
   async list(
-    @CurrentUser() user: RequestUser,
+    @CurrentUser() user: AuthenticatedUser,
     @Query('page') page = '1',
     @Query('pageSize') pageSize = '20',
   ) {

@@ -13,7 +13,14 @@ export interface RequestUser {
   userId: string;
   scope: SessionScope;
   email: string;
+  renewed: boolean;
 }
+
+/**
+ * The shape actually attached to `req.user` — AuthGuard strips `renewed`
+ * before assignment, so controllers/`@CurrentUser()` never see it.
+ */
+export type AuthenticatedUser = Omit<RequestUser, 'renewed'>;
 
 function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
@@ -52,11 +59,25 @@ export class SessionService {
     if (!session) return null;
     const user = await this.userModel.findById(session.userId);
     if (!user) return null;
+
+    let renewed = false;
+    if (session.scope === 'full') {
+      const remainingMs = session.expiresAt.getTime() - Date.now();
+      if (remainingMs < this.fullTtlMs / 2) {
+        await this.sessionModel.updateOne(
+          { _id: session._id },
+          { expiresAt: new Date(Date.now() + this.fullTtlMs) },
+        );
+        renewed = true;
+      }
+    }
+
     return {
       sessionId: session._id.toHexString(),
       userId: session.userId.toHexString(),
       scope: session.scope,
       email: user.email,
+      renewed,
     };
   }
 

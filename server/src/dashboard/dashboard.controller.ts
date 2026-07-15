@@ -1,7 +1,7 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../auth-guard/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
-import { RequestUser } from '../auth-guard/session.service';
+import { AuthenticatedUser } from '../auth-guard/session.service';
 import { DashboardService } from './dashboard.service';
 
 @Controller('dashboard')
@@ -10,18 +10,18 @@ export class DashboardController {
   constructor(private service: DashboardService) {}
 
   @Get('summary')
-  summary(@CurrentUser() user: RequestUser) {
+  summary(@CurrentUser() user: AuthenticatedUser) {
     return this.service.computeSummary(user.userId);
   }
 
   @Get('balances')
-  balances(@CurrentUser() user: RequestUser) {
+  balances(@CurrentUser() user: AuthenticatedUser) {
     return this.service.balances(user.userId);
   }
 
   @Get('upcoming-bills')
   upcomingBills(
-    @CurrentUser() user: RequestUser,
+    @CurrentUser() user: AuthenticatedUser,
     @Query('days') days = '14',
   ) {
     const d = Math.min(90, Math.max(1, parseInt(days, 10) || 14));
@@ -29,7 +29,7 @@ export class DashboardController {
   }
 
   @Get('recent-transactions')
-  recent(@CurrentUser() user: RequestUser, @Query('limit') limit = '10') {
+  recent(@CurrentUser() user: AuthenticatedUser, @Query('limit') limit = '10') {
     return this.service.recentTransactions(
       user.userId,
       parseInt(limit, 10) || 10,
@@ -37,13 +37,13 @@ export class DashboardController {
   }
 
   @Get('net-worth-trend')
-  netWorthTrend(@CurrentUser() user: RequestUser) {
+  netWorthTrend(@CurrentUser() user: AuthenticatedUser) {
     return this.service.netWorthTrend(user.userId);
   }
 
   @Get('spending-by-category')
   spendingByCategory(
-    @CurrentUser() user: RequestUser,
+    @CurrentUser() user: AuthenticatedUser,
     @Query('month') month?: string,
   ) {
     const m =
@@ -55,7 +55,7 @@ export class DashboardController {
 
   @Get('spending-trend')
   spendingTrend(
-    @CurrentUser() user: RequestUser,
+    @CurrentUser() user: AuthenticatedUser,
     @Query('months') months = '12',
   ) {
     const m = Math.min(36, Math.max(1, parseInt(months, 10) || 12));

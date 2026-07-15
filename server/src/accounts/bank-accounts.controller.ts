@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '../auth-guard/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
-import { RequestUser } from '../auth-guard/session.service';
+import { AuthenticatedUser } from '../auth-guard/session.service';
 import { BankAccountsService } from './bank-accounts.service';
 import { CreateBankAccountDto, UpdateBankAccountDto } from './dto';
 
@@ -20,18 +20,18 @@ export class BankAccountsController {
   constructor(private service: BankAccountsService) {}
 
   @Get()
-  list(@CurrentUser() user: RequestUser) {
+  list(@CurrentUser() user: AuthenticatedUser) {
     return this.service.list(user.userId);
   }
 
   @Post()
-  create(@CurrentUser() user: RequestUser, @Body() dto: CreateBankAccountDto) {
+  create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateBankAccountDto) {
     return this.service.create(user.userId, dto);
   }
 
   @Patch(':id')
   update(
-    @CurrentUser() user: RequestUser,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Body() dto: UpdateBankAccountDto,
   ) {
@@ -39,13 +39,13 @@ export class BankAccountsController {
   }
 
   @Delete(':id')
-  async remove(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+  async remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     await this.service.remove(user.userId, id);
     return { ok: true };
   }
 
   @Post(':id/recompute')
-  recompute(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+  recompute(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.service.recompute(user.userId, id);
   }
 }

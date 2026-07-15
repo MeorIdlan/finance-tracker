@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '../auth-guard/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
-import { RequestUser } from '../auth-guard/session.service';
+import { AuthenticatedUser } from '../auth-guard/session.service';
 import { TransactionsService } from './transactions.service';
 import {
   CreateTransactionDto,
@@ -26,7 +26,7 @@ export class TransactionsController {
 
   @Get()
   list(
-    @CurrentUser() user: RequestUser,
+    @CurrentUser() user: AuthenticatedUser,
     @Query() query: ListTransactionsQuery,
   ) {
     return this.service.list(user.userId, query);
@@ -34,7 +34,7 @@ export class TransactionsController {
 
   @Post()
   create(
-    @CurrentUser() user: RequestUser,
+    @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateTransactionDto,
   ) {
     return this.service.create(user.userId, dto);
@@ -42,7 +42,7 @@ export class TransactionsController {
 
   @Patch(':id')
   update(
-    @CurrentUser() user: RequestUser,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Body() dto: UpdateTransactionDto,
   ) {
@@ -50,7 +50,7 @@ export class TransactionsController {
   }
 
   @Delete(':id')
-  async remove(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+  async remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     await this.service.remove(user.userId, id);
     return { ok: true };
   }

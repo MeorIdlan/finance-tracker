@@ -12,10 +12,18 @@ Add sliding (renew-on-use) expiration for `full`-scope sessions only.
 - **Trigger:** threshold-based, not renew-on-every-request. After fetching a valid session, if `session.scope === 'full'` and the remaining time until `expiresAt` is less than half of `fullTtlMs`, rewrite `expiresAt` to `now + fullTtlMs`.
   - With the default 30-day TTL, a session renews the first time it's used after day 15, resetting to a fresh 30-day window.
   - This bounds the DB write to roughly once per `fullTtlMs / 2` per session, instead of once per request.
-- **Renewal write is fire-and-forget:** don't block `validate()`'s return on the `updateOne` completing — session renewal isn't itself security-critical (worst case a borderline session isn't renewed this request and gets renewed next time, or the user re-authenticates a bit early).
+- **Renewal write is awaited** inside `validate()` before it returns. (Earlier drafts of this spec called this "fire-and-forget" — that wording was never implemented; a single indexed `updateOne` that fires at most once per `fullTtlMs / 2` per session is cheap enough to await, and awaiting keeps behavior deterministic and testable.)
 - **Pending sessions are untouched.** `scope !== 'full'` (e.g. `pending_passkey`) always keeps its original fixed 15-minute window — no sliding renewal. These are short-lived registration/login flows, not sessions a user should be "kept alive" in.
 - **No absolute cap.** As long as a full session is used at least once within any `fullTtlMs`-sized window, it renews indefinitely. No second "hard max age" timestamp is introduced.
-- **No new endpoint and no client changes.** Renewal piggybacks on every existing authenticated request through `AuthGuard`, so nothing else in the auth flow changes.
+- **No new endpoint.** Renewal piggybacks on every existing authenticated request through `AuthGuard`.
+
+## Addendum: cookie renewal (added after initial implementation)
+
+The initial implementation only renewed the server-side `Session.expiresAt`. Auth is cookie-based (see CLAUDE.md), and the `sid` cookie is issued once at login with a fixed `maxAge` (`server/src/auth/cookie.ts`, `setSessionCookie`) — it is never reissued afterward. So a server-side-only renewal doesn't achieve the feature's goal: the browser stops sending the cookie at the original fixed deadline regardless of server-side renewal, and the user is logged out anyway. This was caught in final branch review, not anticipated in the original design — the "no client changes" line above was wrong; the cookie's `maxAge` is server-set state that also needs to slide.
+
+**Fix:** `SessionService.validate()` reports whether it renewed the session (add a `renewed: boolean` field to the returned `RequestUser`). `AuthGuard.canActivate()` — which already has access to the `Response` via `ExecutionContext` — reissues the `sid` cookie via `setSessionCookie()` (same token, scope `'full'`, fresh `maxAge`) whenever `renewed` is true. The `renewed` field is stripped before `req.user` is set, so it never leaks into `@CurrentUser()` consumers.
+
+This still requires no new endpoint and no changes outside `server/src/auth-guard/` and the one `setSessionCookie` call site added to `AuthGuard`.
 
 ## Testing
 
