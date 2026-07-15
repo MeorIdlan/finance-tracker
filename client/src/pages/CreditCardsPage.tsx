@@ -16,6 +16,7 @@ export default function CreditCardsPage() {
   const [limit, setLimit] = useState('');
   const [statementDay, setStatementDay] = useState('1');
   const [dueDay, setDueDay] = useState('22');
+  const [openingBalance, setOpeningBalance] = useState('');
 
   const load = useCallback(async () => {
     setItems(await api<CreditCardDto[]>('/credit-cards'));
@@ -30,6 +31,12 @@ export default function CreditCardsPage() {
     setError('');
     const limitSen = parseRM(limit);
     if (limitSen === null) return setError('Invalid credit limit.');
+    let currentBalance: number | undefined;
+    if (openingBalance.trim() !== '') {
+      const sen = parseRM(openingBalance);
+      if (sen === null) return setError('Invalid opening balance.');
+      currentBalance = sen;
+    }
     try {
       await api('/credit-cards', {
         method: 'POST',
@@ -38,10 +45,12 @@ export default function CreditCardsPage() {
           creditLimit: limitSen,
           statementDay: parseInt(statementDay, 10),
           dueDay: parseInt(dueDay, 10),
+          ...(currentBalance !== undefined ? { currentBalance } : {}),
         },
       });
       setName('');
       setLimit('');
+      setOpeningBalance('');
       setDrawerOpen(false);
       await load();
     } catch (err) {
@@ -136,6 +145,12 @@ export default function CreditCardsPage() {
             max={28}
             value={dueDay}
             onChange={(e) => setDueDay(e.target.value)}
+          />
+          <Input
+            id="openingBalance"
+            label="Opening balance (RM, optional)"
+            value={openingBalance}
+            onChange={(e) => setOpeningBalance(e.target.value)}
           />
           <Button type="submit" className="w-full">
             Add card
