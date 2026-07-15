@@ -21,6 +21,10 @@ export class CreateCommitmentDto {
   @Min(1)
   @Max(31)
   dueDayOfMonth: number;
+
+  @IsOptional()
+  @IsBoolean()
+  alreadyPaidThisPeriod?: boolean;
 }
 
 export class UpdateCommitmentDto {

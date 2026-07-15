@@ -11,7 +11,11 @@ import {
   CommitmentDocument,
 } from '../database/schemas/commitment.schema';
 import { Transaction } from '../database/schemas/transaction.schema';
-import { commitmentStatus, nextDueDateFrom } from '../common/dates';
+import {
+  commitmentStatus,
+  nextDueDateFrom,
+  shiftDueDate,
+} from '../common/dates';
 import { AuditLogService } from '../audit/audit.service';
 import { CreateCommitmentDto, UpdateCommitmentDto } from './dto';
 
@@ -56,12 +60,16 @@ export class CommitmentsService {
     userId: string,
     dto: CreateCommitmentDto,
   ): Promise<CommitmentDto> {
+    let nextDueDate = nextDueDateFrom(dto.dueDayOfMonth);
+    if (dto.alreadyPaidThisPeriod) {
+      nextDueDate = shiftDueDate(nextDueDate, dto.dueDayOfMonth, 1);
+    }
     const doc = await this.model.create({
       userId: new Types.ObjectId(userId),
       name: dto.name,
       amount: dto.amount,
       dueDayOfMonth: dto.dueDayOfMonth,
-      nextDueDate: nextDueDateFrom(dto.dueDayOfMonth),
+      nextDueDate,
       active: true,
     });
     await this.audit.log({

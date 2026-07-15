@@ -31,6 +31,31 @@ describe('commitments', () => {
     expect(new Date(res.body.nextDueDate).getUTCDate()).toBeLessThanOrEqual(31);
   });
 
+  it('alreadyPaidThisPeriod shifts nextDueDate one period beyond a normal commitment', async () => {
+    const server = ctx.app.getHttpServer();
+    const normal = await request(server)
+      .post('/api/commitments')
+      .set('Cookie', cookie)
+      .send({ name: 'Water', amount: 5000, dueDayOfMonth: 1 })
+      .expect(201);
+    const paid = await request(server)
+      .post('/api/commitments')
+      .set('Cookie', cookie)
+      .send({
+        name: 'Water Paid',
+        amount: 5000,
+        dueDayOfMonth: 1,
+        alreadyPaidThisPeriod: true,
+      })
+      .expect(201);
+    const normalDate = new Date(normal.body.nextDueDate);
+    const paidDate = new Date(paid.body.nextDueDate);
+    const monthsApart =
+      (paidDate.getUTCFullYear() - normalDate.getUTCFullYear()) * 12 +
+      (paidDate.getUTCMonth() - normalDate.getUTCMonth());
+    expect(monthsApart).toBe(1);
+  });
+
   it('updates amount and recomputes due date when the day changes', async () => {
     const list = await request(ctx.app.getHttpServer())
       .get('/api/commitments')
