@@ -16,8 +16,9 @@ export type TransactionType =
   | 'commitmentPayment'
   | 'loanPayment'
   | 'cardPayment'
-  | 'cardCharge'
   | 'transfer';
+
+export type SourceType = 'bankAccount' | 'creditCard';
 
 export interface AuthUser {
   id: string;
@@ -93,7 +94,8 @@ export interface TransactionDto {
   amount: number;
   date: string;
   category?: ExpenseCategory;
-  accountId?: string;
+  sourceType: SourceType;
+  sourceId: string;
   toAccountId?: string;
   linkedEntityId?: string;
   note?: string;
