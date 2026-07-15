@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '../auth-guard/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
-import { RequestUser } from '../auth-guard/session.service';
+import { AuthenticatedUser } from '../auth-guard/session.service';
 import { CreditCardsService } from './credit-cards.service';
 import { CreateCreditCardDto, UpdateCreditCardDto } from './dto';
 
@@ -20,18 +20,18 @@ export class CreditCardsController {
   constructor(private service: CreditCardsService) {}
 
   @Get()
-  list(@CurrentUser() user: RequestUser) {
+  list(@CurrentUser() user: AuthenticatedUser) {
     return this.service.list(user.userId);
   }
 
   @Post()
-  create(@CurrentUser() user: RequestUser, @Body() dto: CreateCreditCardDto) {
+  create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateCreditCardDto) {
     return this.service.create(user.userId, dto);
   }
 
   @Patch(':id')
   update(
-    @CurrentUser() user: RequestUser,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Body() dto: UpdateCreditCardDto,
   ) {
@@ -39,7 +39,7 @@ export class CreditCardsController {
   }
 
   @Delete(':id')
-  async remove(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+  async remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     await this.service.remove(user.userId, id);
     return { ok: true };
   }

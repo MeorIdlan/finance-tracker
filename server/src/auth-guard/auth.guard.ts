@@ -8,7 +8,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
-import { SessionService } from './session.service';
+import { SessionService, AuthenticatedUser } from './session.service';
 import { setSessionCookie } from '../auth/cookie';
 
 export const ALLOW_PENDING_KEY = 'allowPendingSession';
@@ -42,7 +42,7 @@ export class AuthGuard implements CanActivate {
     }
 
     const { renewed, ...requestUser } = user;
-    (req as Request & { user: unknown }).user = requestUser;
+    (req as Request & { user: AuthenticatedUser }).user = requestUser;
     return true;
   }
 }

@@ -12,7 +12,7 @@ Add sliding (renew-on-use) expiration for `full`-scope sessions only.
 - **Trigger:** threshold-based, not renew-on-every-request. After fetching a valid session, if `session.scope === 'full'` and the remaining time until `expiresAt` is less than half of `fullTtlMs`, rewrite `expiresAt` to `now + fullTtlMs`.
   - With the default 30-day TTL, a session renews the first time it's used after day 15, resetting to a fresh 30-day window.
   - This bounds the DB write to roughly once per `fullTtlMs / 2` per session, instead of once per request.
-- **Renewal write is fire-and-forget:** don't block `validate()`'s return on the `updateOne` completing — session renewal isn't itself security-critical (worst case a borderline session isn't renewed this request and gets renewed next time, or the user re-authenticates a bit early).
+- **Renewal write is awaited** inside `validate()` before it returns. (Earlier drafts of this spec called this "fire-and-forget" — that wording was never implemented; a single indexed `updateOne` that fires at most once per `fullTtlMs / 2` per session is cheap enough to await, and awaiting keeps behavior deterministic and testable.)
 - **Pending sessions are untouched.** `scope !== 'full'` (e.g. `pending_passkey`) always keeps its original fixed 15-minute window — no sliding renewal. These are short-lived registration/login flows, not sessions a user should be "kept alive" in.
 - **No absolute cap.** As long as a full session is used at least once within any `fullTtlMs`-sized window, it renews indefinitely. No second "hard max age" timestamp is introduced.
 - **No new endpoint.** Renewal piggybacks on every existing authenticated request through `AuthGuard`.

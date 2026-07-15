@@ -13,7 +13,7 @@ import { PasskeySummary } from '@finance/shared';
 import { Credential } from '../database/schemas/credential.schema';
 import { AuthGuard } from '../auth-guard/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
-import { RequestUser } from '../auth-guard/session.service';
+import { AuthenticatedUser } from '../auth-guard/session.service';
 import { AuditLogService } from '../audit/audit.service';
 
 @Controller('passkeys')
@@ -25,7 +25,7 @@ export class PasskeysController {
   ) {}
 
   @Get()
-  async list(@CurrentUser() user: RequestUser): Promise<PasskeySummary[]> {
+  async list(@CurrentUser() user: AuthenticatedUser): Promise<PasskeySummary[]> {
     const creds = await this.credModel
       .find({ userId: new Types.ObjectId(user.userId) })
       .sort({ createdAt: -1 });
@@ -37,7 +37,7 @@ export class PasskeysController {
   }
 
   @Delete(':id')
-  async remove(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+  async remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     const uid = new Types.ObjectId(user.userId);
     if (!Types.ObjectId.isValid(id)) throw new NotFoundException();
     // Deviation from brief: verify existence/ownership before checking

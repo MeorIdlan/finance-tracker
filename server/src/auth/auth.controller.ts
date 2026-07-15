@@ -8,7 +8,7 @@ import { EmailDto, VerifyOtpDto, PasskeyVerifyDto, LoginVerifyDto } from './dto'
 import { setSessionCookie, clearSessionCookie } from './cookie';
 import { AuthGuard, AllowPendingSession } from '../auth-guard/auth.guard';
 import { CurrentUser } from './current-user.decorator';
-import { RequestUser, SessionService } from '../auth-guard/session.service';
+import { AuthenticatedUser, SessionService } from '../auth-guard/session.service';
 import { WebauthnService } from './webauthn.service';
 import { AuditLogService } from '../audit/audit.service';
 import { AuthUser } from '@finance/shared';
@@ -56,7 +56,7 @@ export class AuthController {
   @Post('passkey/options')
   @UseGuards(AuthGuard)
   @AllowPendingSession()
-  async passkeyOptions(@CurrentUser() user: RequestUser) {
+  async passkeyOptions(@CurrentUser() user: AuthenticatedUser) {
     return this.webauthn.registrationOptions(user.userId, user.email);
   }
 
@@ -64,7 +64,7 @@ export class AuthController {
   @UseGuards(AuthGuard)
   @AllowPendingSession()
   async passkeyVerify(
-    @CurrentUser() user: RequestUser,
+    @CurrentUser() user: AuthenticatedUser,
     @Body() dto: PasskeyVerifyDto,
   ) {
     const cred = await this.webauthn.verifyRegistration(
@@ -113,7 +113,7 @@ export class AuthController {
   @UseGuards(AuthGuard)
   @AllowPendingSession()
   async logout(
-    @CurrentUser() user: RequestUser,
+    @CurrentUser() user: AuthenticatedUser,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
@@ -126,7 +126,7 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(AuthGuard)
-  me(@CurrentUser() user: RequestUser): AuthUser {
+  me(@CurrentUser() user: AuthenticatedUser): AuthUser {
     return { id: user.userId, email: user.email };
   }
 }

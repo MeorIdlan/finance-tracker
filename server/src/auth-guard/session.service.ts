@@ -16,6 +16,12 @@ export interface RequestUser {
   renewed: boolean;
 }
 
+/**
+ * The shape actually attached to `req.user` — AuthGuard strips `renewed`
+ * before assignment, so controllers/`@CurrentUser()` never see it.
+ */
+export type AuthenticatedUser = Omit<RequestUser, 'renewed'>;
+
 function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
