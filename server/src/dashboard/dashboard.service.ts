@@ -213,7 +213,7 @@ export class DashboardService {
       {
         $match: {
           userId: new Types.ObjectId(userId),
-          type: { $in: ['expense', 'commitmentPayment', 'cardCharge'] },
+          type: { $in: ['expense', 'commitmentPayment'] },
           date: { $gte: start },
         },
       },

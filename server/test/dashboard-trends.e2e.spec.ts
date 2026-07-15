@@ -25,19 +25,46 @@ describe('dashboard trend endpoints', () => {
     await request(server)
       .post('/api/transactions')
       .set('Cookie', cookie)
-      .send({ type: 'expense', amount: 3000, date: today, accountId: bank.id, category: 'Food' });
+      .send({
+        type: 'expense',
+        amount: 3000,
+        date: today,
+        sourceType: 'bankAccount',
+        sourceId: bank.id,
+        category: 'Food',
+      });
     await request(server)
       .post('/api/transactions')
       .set('Cookie', cookie)
-      .send({ type: 'expense', amount: 2000, date: today, accountId: bank.id, category: 'Food' });
+      .send({
+        type: 'expense',
+        amount: 2000,
+        date: today,
+        sourceType: 'bankAccount',
+        sourceId: bank.id,
+        category: 'Food',
+      });
     await request(server)
       .post('/api/transactions')
       .set('Cookie', cookie)
-      .send({ type: 'expense', amount: 7000, date: today, accountId: bank.id, category: 'Transport' });
+      .send({
+        type: 'expense',
+        amount: 7000,
+        date: today,
+        sourceType: 'bankAccount',
+        sourceId: bank.id,
+        category: 'Transport',
+      });
     await request(server)
       .post('/api/transactions')
       .set('Cookie', cookie)
-      .send({ type: 'income', amount: 99999, date: today, accountId: bank.id });
+      .send({
+        type: 'income',
+        amount: 99999,
+        date: today,
+        sourceType: 'bankAccount',
+        sourceId: bank.id,
+      });
   });
 
   afterAll(async () => {

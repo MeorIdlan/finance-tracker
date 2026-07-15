@@ -45,10 +45,12 @@ describe('dashboard summary endpoints', () => {
       .post('/api/transactions')
       .set('Cookie', cookie)
       .send({
-        type: 'cardCharge',
+        type: 'expense',
         amount: 40000,
         date: new Date().toISOString().slice(0, 10),
-        linkedEntityId: card.id,
+        sourceType: 'creditCard',
+        sourceId: card.id,
+        category: 'Shopping',
       });
     await request(server)
       .post('/api/commitments')
@@ -62,7 +64,8 @@ describe('dashboard summary endpoints', () => {
         type: 'expense',
         amount: 2500,
         date: new Date().toISOString().slice(0, 10),
-        accountId: bank.id,
+        sourceType: 'bankAccount',
+        sourceId: bank.id,
         category: 'Food',
       });
   });
