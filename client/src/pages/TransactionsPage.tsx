@@ -26,7 +26,6 @@ const TYPE_LABELS: Record<TransactionType, string> = {
   commitmentPayment: 'Commitment payment',
   loanPayment: 'Loan payment',
   cardPayment: 'Credit card payment',
-  cardCharge: 'Credit card charge',
   transfer: 'Transfer',
 };
 
@@ -51,12 +50,16 @@ export default function TransactionsPage() {
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [category, setCategory] = useState<string>(EXPENSE_CATEGORIES[0]);
-  const [accountId, setAccountId] = useState('');
+  const [sourceType, setSourceType] = useState<'bankAccount' | 'creditCard'>(
+    'bankAccount',
+  );
+  const [sourceId, setSourceId] = useState('');
   const [toAccountId, setToAccountId] = useState('');
   const [linkedEntityId, setLinkedEntityId] = useState('');
   const [note, setNote] = useState('');
 
-  const needsAccount = type !== 'cardCharge';
+  const allowsCardSource =
+    type === 'expense' || type === 'commitmentPayment' || type === 'loanPayment';
   const needsCategory = type === 'expense';
   const needsToAccount = type === 'transfer';
   const linkedOptions =
@@ -64,7 +67,7 @@ export default function TransactionsPage() {
       ? commitments.map((c) => [c.id, c.name])
       : type === 'loanPayment'
         ? loans.map((l) => [l.id, l.name])
-        : type === 'cardPayment' || type === 'cardCharge'
+        : type === 'cardPayment'
           ? cards.map((c) => [c.id, c.name])
           : [];
 
@@ -102,7 +105,8 @@ export default function TransactionsPage() {
     setAmount('');
     setDate(new Date().toISOString().slice(0, 10));
     setCategory(EXPENSE_CATEGORIES[0]);
-    setAccountId('');
+    setSourceType('bankAccount');
+    setSourceId('');
     setToAccountId('');
     setLinkedEntityId('');
     setNote('');
@@ -134,7 +138,8 @@ export default function TransactionsPage() {
             amount: sen,
             date,
             ...(needsCategory ? { category } : {}),
-            ...(needsAccount ? { accountId } : {}),
+            sourceType,
+            sourceId,
             ...(needsToAccount ? { toAccountId } : {}),
             ...(linkedOptions.length ? { linkedEntityId } : {}),
             ...(note ? { note } : {}),
@@ -257,8 +262,17 @@ export default function TransactionsPage() {
               label="Type"
               value={type}
               onChange={(e) => {
-                setType(e.target.value as TransactionType);
+                const next = e.target.value as TransactionType;
+                setType(next);
                 setLinkedEntityId('');
+                if (
+                  next !== 'expense' &&
+                  next !== 'commitmentPayment' &&
+                  next !== 'loanPayment'
+                ) {
+                  setSourceType('bankAccount');
+                }
+                setSourceId('');
               }}
             >
               {Object.entries(TYPE_LABELS).map(([value, label]) => (
@@ -285,22 +299,34 @@ export default function TransactionsPage() {
                 onChange={(e) => setDate(e.target.value)}
                 required
               />
-              {needsAccount && (
+              {allowsCardSource && (
                 <Select
-                  id="account"
-                  label="Account"
-                  value={accountId}
-                  onChange={(e) => setAccountId(e.target.value)}
-                  required
+                  id="sourceType"
+                  label="Pay from"
+                  value={sourceType}
+                  onChange={(e) => {
+                    setSourceType(e.target.value as 'bankAccount' | 'creditCard');
+                    setSourceId('');
+                  }}
                 >
-                  <option value="">Select account…</option>
-                  {banks.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.name}
-                    </option>
-                  ))}
+                  <option value="bankAccount">Bank account</option>
+                  <option value="creditCard">Credit card</option>
                 </Select>
               )}
+              <Select
+                id="source"
+                label={sourceType === 'creditCard' ? 'Credit card' : 'Account'}
+                value={sourceId}
+                onChange={(e) => setSourceId(e.target.value)}
+                required
+              >
+                <option value="">Select {sourceType === 'creditCard' ? 'card' : 'account'}…</option>
+                {(sourceType === 'creditCard' ? cards : banks).map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name}
+                  </option>
+                ))}
+              </Select>
               {needsToAccount && (
                 <Select
                   id="toAccount"
@@ -311,7 +337,7 @@ export default function TransactionsPage() {
                 >
                   <option value="">To account…</option>
                   {banks
-                    .filter((b) => b.id !== accountId)
+                    .filter((b) => b.id !== sourceId)
                     .map((b) => (
                       <option key={b.id} value={b.id}>
                         {b.name}

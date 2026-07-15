@@ -53,7 +53,6 @@ const TYPE_LABELS: Record<TransactionType, string> = {
   commitmentPayment: 'Commitment payment',
   loanPayment: 'Loan payment',
   cardPayment: 'Credit card payment',
-  cardCharge: 'Credit card charge',
   transfer: 'Transfer',
 };
 
