@@ -1,18 +1,5 @@
 services:
-  mongo:
-    image: mongo:8
-    hostname: mongo
-    restart: unless-stopped
-    command: ["--replSet", "rs0", "--bind_ip_all"]
-    volumes:
-      - mongo-data:/data/db
-    healthcheck:
-      test: ["CMD-SHELL", "mongosh --quiet --eval 'try { rs.status().ok } catch (e) { rs.initiate({_id: \"rs0\", members: [{_id: 0, host: \"mongo:27017\"}]}).ok }'"]
-      interval: 5s
-      timeout: 30s
-      retries: 30
-
-  server:
+  finance-tracker-server:
     build:
       context: .
       dockerfile: server/Dockerfile
@@ -21,9 +8,9 @@ services:
     environment:
       MONGODB_URI: mongodb://mongo:27017/finance-tracker?replicaSet=rs0&directConnection=true
       COOKIE_SECURE: "true"
-    depends_on:
-      mongo:
-        condition: service_healthy
+    networks:
+      - default
+      - shared-mongo
 
   client:
     build:
@@ -31,7 +18,7 @@ services:
       dockerfile: client/Dockerfile
     restart: unless-stopped
     depends_on:
-      - server
+      - finance-tracker-server
 
   cloudflared:
     image: cloudflare/cloudflared:latest
@@ -40,5 +27,6 @@ services:
     depends_on:
       - client
 
-volumes:
-  mongo-data:
+networks:
+  shared-mongo:
+    external: true
