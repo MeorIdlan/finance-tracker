@@ -12,21 +12,19 @@ services:
       - default
       - shared-mongo
 
-  client:
+  finance-tracker-client:
     build:
       context: .
       dockerfile: client/Dockerfile
     restart: unless-stopped
     depends_on:
       - finance-tracker-server
-
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    restart: unless-stopped
-    command: ["tunnel", "run", "--token", "${CLOUDFLARE_TUNNEL_TOKEN}"]
-    depends_on:
-      - client
+    networks:
+      - default
+      - shared-edge
 
 networks:
   shared-mongo:
+    external: true
+  shared-edge:
     external: true
