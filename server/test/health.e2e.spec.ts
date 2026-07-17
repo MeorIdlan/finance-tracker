@@ -11,9 +11,9 @@ describe('GET /api/health', () => {
   beforeAll(async () => {
     mongo = await startMemoryMongo();
     process.env.MONGODB_URI = mongo.uri;
-    process.env.MAILERSEND_API_KEY = 'test-key';
-    process.env.MAILERSEND_FROM_EMAIL = 'noreply@test.com';
-    process.env.EMAIL_MONTHLY_QUOTA = '3000';
+    process.env.MAILGUN_API_KEY = 'test-key';
+    process.env.MAILGUN_DOMAIN = 'mg.test.com';
+    process.env.MAILGUN_FROM_EMAIL = 'noreply@test.com';
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();

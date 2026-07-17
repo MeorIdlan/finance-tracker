@@ -7,7 +7,7 @@
    in the `docker` group.
 2. **Clone**: `git clone <repo> && cd finance-tracker`.
 3. **Env**: `cp .env.example .env`, then set real values:
-   - `MAILERSEND_API_KEY`, `MAILERSEND_FROM_EMAIL` (a verified sender domain)
+   - `MAILGUN_API_KEY`, `MAILGUN_DOMAIN`, `MAILGUN_FROM_EMAIL` (a verified sender domain)
    - `WEBAUTHN_RP_ID=finance.example.com` (bare domain, no scheme)
    - `WEBAUTHN_ORIGIN=https://finance.example.com`
    - `CLOUDFLARE_TUNNEL_TOKEN` (next step)
@@ -52,7 +52,7 @@ same way). Keep backups off-droplet.
 
 - **Passkey prompt fails with "invalid domain"**: `WEBAUTHN_RP_ID` must match
   the public hostname exactly, and the origin must be the `https://` form.
-- **OTP emails missing**: check MailerSend dashboard for sender-domain
+- **OTP emails missing**: check Mailgun dashboard for sender-domain
   verification; check the app's audit log for `auth.otp_requested`; quota
   exhaustion returns a clear 503 from `/api/auth/register`.
 - **Mongo "not primary" errors**: the replica set didn't initiate — check

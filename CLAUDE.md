@@ -10,7 +10,7 @@ Self-hosted personal finance tracker. Passwordless (WebAuthn passkeys) auth, Nes
 
 Setup:
 
-    cp .env.example .env        # fill in MailerSend key + from-address
+    cp .env.example .env        # fill in Mailgun key + domain + from-address
     npm install
     npm run build:shared        # must run after any change to shared/src
     docker compose up -d mongo  # single-node replica set; healthcheck auto-runs rs.initiate()

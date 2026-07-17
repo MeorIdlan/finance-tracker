@@ -8,10 +8,6 @@ import {
   WebauthnChallenge,
   WebauthnChallengeSchema,
 } from './schemas/webauthn-challenge.schema';
-import {
-  EmailQuotaUsage,
-  EmailQuotaUsageSchema,
-} from './schemas/email-quota.schema';
 import { AuditLog, AuditLogSchema } from './schemas/audit-log.schema';
 import { BankAccount, BankAccountSchema } from './schemas/bank-account.schema';
 import {
@@ -37,7 +33,6 @@ const models = MongooseModule.forFeature([
   { name: OtpCode.name, schema: OtpCodeSchema },
   { name: Session.name, schema: SessionSchema },
   { name: WebauthnChallenge.name, schema: WebauthnChallengeSchema },
-  { name: EmailQuotaUsage.name, schema: EmailQuotaUsageSchema },
   { name: AuditLog.name, schema: AuditLogSchema },
   { name: BankAccount.name, schema: BankAccountSchema },
   { name: SavingsAccount.name, schema: SavingsAccountSchema },

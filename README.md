@@ -7,7 +7,7 @@ NestJS + React + MongoDB, single currency (MYR).
 
 Prereqs: Node 22+, Docker.
 
-    cp .env.example .env        # fill in MailerSend key + from-address
+    cp .env.example .env        # fill in Mailgun key + domain + from-address
     npm install
     npm run build:shared
     docker compose up -d mongo
