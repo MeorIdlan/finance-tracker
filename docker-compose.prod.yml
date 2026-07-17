@@ -11,6 +11,14 @@ services:
     networks:
       - default
       - shared-mongo
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
 
   finance-tracker-client:
     build:
@@ -22,6 +30,14 @@ services:
     networks:
       - default
       - shared-edge
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+        reservations:
+          cpus: "0.1"
+          memory: 32M
 
 networks:
   shared-mongo:
