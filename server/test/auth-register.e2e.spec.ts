@@ -57,12 +57,14 @@ describe('registration and recovery flow', () => {
       .expect(409);
   });
 
-  it('recover: 201 for verified user, 404 for unknown, otp still sent to the account email', async () => {
+  it('recover: 201 for verified user, 404 for unknown, otp still sent to the account email (not the admin)', async () => {
+    const adminCallsBefore = ctx.adminEmailCalls.length;
     await request(ctx.app.getHttpServer())
       .post('/api/auth/recover')
       .send({ email: 'new@user.com' })
       .expect(201);
     expect(ctx.sentCodes.get('new@user.com')).toMatch(/^\d{6}$/);
+    expect(ctx.adminEmailCalls.length).toBe(adminCallsBefore);
     await request(ctx.app.getHttpServer())
       .post('/api/auth/recover')
       .send({ email: 'ghost@user.com' })
@@ -80,6 +82,13 @@ describe('registration and recovery flow', () => {
     await request(ctx.app.getHttpServer())
       .post('/api/auth/register')
       .send({ email: 'no-name@user.com' })
+      .expect(400);
+  });
+
+  it('rejects a whitespace-only name with 400', async () => {
+    await request(ctx.app.getHttpServer())
+      .post('/api/auth/register')
+      .send({ name: '   ', email: 'blank-name@user.com' })
       .expect(400);
   });
 });
