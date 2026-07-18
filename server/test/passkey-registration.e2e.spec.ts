@@ -42,7 +42,7 @@ describe('passkey registration ceremony', () => {
     // Register through the real flow to obtain a pending session cookie.
     await request(ctx.app.getHttpServer())
       .post('/api/auth/register')
-      .send({ email: 'pk@user.com' });
+      .send({ name: 'PK User', email: 'pk@user.com' });
     const code = ctx.sentCodes.get('pk@user.com')!;
     const res = await request(ctx.app.getHttpServer())
       .post('/api/auth/verify-otp')

@@ -14,6 +14,7 @@ describe('GET /api/health', () => {
     process.env.MAILGUN_API_KEY = 'test-key';
     process.env.MAILGUN_DOMAIN = 'mg.test.com';
     process.env.MAILGUN_FROM_EMAIL = 'noreply@test.com';
+    process.env.ADMIN_EMAIL = 'admin@test.com';
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();

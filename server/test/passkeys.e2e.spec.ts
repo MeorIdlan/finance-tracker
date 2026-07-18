@@ -39,7 +39,7 @@ describe('passkey management and audit log', () => {
     process.env.MONGODB_URI = mongo.uri;
     ctx = await createTestApp();
     const server = ctx.app.getHttpServer();
-    await request(server).post('/api/auth/register').send({ email: 'm@u.com' });
+    await request(server).post('/api/auth/register').send({ name: 'M User', email: 'm@u.com' });
     const code = ctx.sentCodes.get('m@u.com')!;
     const otpRes = await request(server)
       .post('/api/auth/verify-otp')

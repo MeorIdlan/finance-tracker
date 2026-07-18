@@ -5,18 +5,38 @@ import cookieParser from 'cookie-parser';
 import { AppModule } from '../../src/app.module';
 import { EmailService } from '../../src/email/email.service';
 
+export interface AdminEmailCall {
+  adminEmail: string;
+  code: string;
+  name: string;
+  email: string;
+}
+
 export interface TestCtx {
   app: INestApplication;
   sentCodes: Map<string, string>;
+  adminEmailCalls: AdminEmailCall[];
 }
 
+export const TEST_ADMIN_EMAIL = 'admin@test.com';
+
 export async function createTestApp(): Promise<TestCtx> {
+  process.env.ADMIN_EMAIL = TEST_ADMIN_EMAIL;
   const sentCodes = new Map<string, string>();
+  const adminEmailCalls: AdminEmailCall[] = [];
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(EmailService)
     .useValue({
       sendOtpEmail: async (to: string, code: string) => {
         sentCodes.set(to, code);
+      },
+      sendRegistrationRequestEmail: async (
+        adminEmail: string,
+        code: string,
+        registrant: { name: string; email: string },
+      ) => {
+        sentCodes.set(registrant.email, code);
+        adminEmailCalls.push({ adminEmail, code, ...registrant });
       },
     })
     .compile();
@@ -28,5 +48,5 @@ export async function createTestApp(): Promise<TestCtx> {
   app.use(cookieParser());
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   await app.init();
-  return { app, sentCodes };
+  return { app, sentCodes, adminEmailCalls };
 }

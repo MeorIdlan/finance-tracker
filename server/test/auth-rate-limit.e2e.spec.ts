@@ -21,12 +21,12 @@ describe('register/recover rate limiting', () => {
     for (let i = 0; i < 5; i++) {
       await request(ctx.app.getHttpServer())
         .post('/api/auth/register')
-        .send({ email: 'ratelimit@user.com' })
+        .send({ name: 'Rate Limit Test', email: 'ratelimit@user.com' })
         .expect(201);
     }
     await request(ctx.app.getHttpServer())
       .post('/api/auth/register')
-      .send({ email: 'ratelimit@user.com' })
+      .send({ name: 'Rate Limit Test', email: 'ratelimit@user.com' })
       .expect(429);
   });
 
@@ -37,7 +37,7 @@ describe('register/recover rate limiting', () => {
       .expect(429);
     await request(ctx.app.getHttpServer())
       .post('/api/auth/register')
-      .send({ email: 'different@user.com' })
+      .send({ name: 'Different User', email: 'different@user.com' })
       .expect(201);
   });
 
@@ -54,20 +54,20 @@ describe('register/recover rate limiting', () => {
       await request(ctx.app.getHttpServer())
         .post('/api/auth/register')
         .set('X-Forwarded-For', '203.0.113.10')
-        .send({ email })
+        .send({ name: 'XFF Test', email })
         .expect(201);
     }
     await request(ctx.app.getHttpServer())
       .post('/api/auth/register')
       .set('X-Forwarded-For', '203.0.113.10')
-      .send({ email })
+      .send({ name: 'XFF Test', email })
       .expect(429);
 
     // A different simulated client IP, same email, is not blocked.
     await request(ctx.app.getHttpServer())
       .post('/api/auth/register')
       .set('X-Forwarded-For', '203.0.113.20')
-      .send({ email })
+      .send({ name: 'XFF Test', email })
       .expect(201);
   });
 });

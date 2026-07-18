@@ -31,7 +31,7 @@ jest.mock('@simplewebauthn/server', () => ({
 async function registerWithPasskey(ctx: TestCtx, email: string) {
   const server = ctx.app.getHttpServer();
   const credentialId = `cred-${email}`;
-  await request(server).post('/api/auth/register').send({ email });
+  await request(server).post('/api/auth/register').send({ name: 'Test User', email });
   const code = ctx.sentCodes.get(email)!;
   const otpRes = await request(server)
     .post('/api/auth/verify-otp')
