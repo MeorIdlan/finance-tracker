@@ -6,6 +6,7 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 
 export default function RegisterPage() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -16,7 +17,7 @@ export default function RegisterPage() {
     setBusy(true);
     setError('');
     try {
-      await api('/auth/register', { method: 'POST', body: { email } });
+      await api('/auth/register', { method: 'POST', body: { name, email } });
       navigate('/register/verify', { state: { email, purpose: 'register' } });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong.');
@@ -29,6 +30,14 @@ export default function RegisterPage() {
     <AuthCard title="Create account">
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <Input
+          id="name"
+          label="Name"
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
+        <Input
           id="email"
           label="Email"
           type="email"
@@ -37,7 +46,7 @@ export default function RegisterPage() {
           required
         />
         <Button type="submit" disabled={busy} className="w-full">
-          Send verification code
+          Request access
         </Button>
       </form>
       {error && (
@@ -45,6 +54,10 @@ export default function RegisterPage() {
           {error}
         </p>
       )}
+      <p className="mt-4 text-xs text-muted">
+        An admin will review your request and share a verification code with
+        you if approved.
+      </p>
       <p className="mt-4 text-xs text-muted">
         Already have an account?{' '}
         <Link to="/login" className="text-accent hover:underline">
