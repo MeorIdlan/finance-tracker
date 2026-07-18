@@ -4,7 +4,7 @@ import { Response, Request } from 'express';
 import type { RegistrationResponseJSON, AuthenticationResponseJSON } from '@simplewebauthn/server';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
-import { EmailDto, VerifyOtpDto, PasskeyVerifyDto, LoginVerifyDto } from './dto';
+import { EmailDto, RegisterDto, VerifyOtpDto, PasskeyVerifyDto, LoginVerifyDto } from './dto';
 import { setSessionCookie, clearSessionCookie } from './cookie';
 import { AuthGuard, AllowPendingSession } from '../auth-guard/auth.guard';
 import { CurrentUser } from './current-user.decorator';
@@ -30,8 +30,8 @@ export class AuthController {
   @Post('register')
   @UseGuards(EmailKeyThrottlerGuard)
   @Throttle({ [AUTH_EMAIL_THROTTLER_NAME]: { limit: 5, ttl: 3_600_000 } })
-  async register(@Body() dto: EmailDto) {
-    await this.auth.startRegistration(dto.email);
+  async register(@Body() dto: RegisterDto) {
+    await this.auth.startRegistration(dto.name, dto.email);
     return { message: 'Verification code sent.' };
   }
 

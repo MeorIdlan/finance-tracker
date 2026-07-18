@@ -5,9 +5,19 @@ import {
   IsOptional,
   IsString,
   Length,
+  MinLength,
 } from 'class-validator';
 
 export class EmailDto {
+  @IsEmail()
+  email: string;
+}
+
+export class RegisterDto {
+  @IsString()
+  @MinLength(1)
+  name: string;
+
   @IsEmail()
   email: string;
 }
