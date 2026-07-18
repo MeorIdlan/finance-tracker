@@ -67,4 +67,30 @@ describe('EmailService', () => {
     await service.sendOtpEmail('a@b.com', '123456');
     expect(sendMock).toHaveBeenCalledTimes(1);
   });
+
+  it('sends a registration request to the given admin email with the registrant name/email/code', async () => {
+    limitGetMock.mockResolvedValue({ limit: 3000, current: 5, period: 'monthly' });
+    await service.sendRegistrationRequestEmail('admin@test.com', '654321', {
+      name: 'Jane Doe',
+      email: 'jane@example.com',
+    });
+    expect(sendMock).toHaveBeenCalledTimes(1);
+    const call = sendMock.mock.calls[0];
+    expect(call[0]).toBe('mg.test.com');
+    expect(call[1].to).toEqual(['admin@test.com']);
+    expect(call[1].text).toContain('Jane Doe');
+    expect(call[1].text).toContain('jane@example.com');
+    expect(call[1].text).toContain('654321');
+  });
+
+  it('hard-stops sendRegistrationRequestEmail once the Mailgun account limit is reached', async () => {
+    limitGetMock.mockResolvedValue({ limit: 3000, current: 3000, period: 'monthly' });
+    await expect(
+      service.sendRegistrationRequestEmail('admin@test.com', '654321', {
+        name: 'Jane Doe',
+        email: 'jane@example.com',
+      }),
+    ).rejects.toThrow(ServiceUnavailableException);
+    expect(sendMock).not.toHaveBeenCalled();
+  });
 });

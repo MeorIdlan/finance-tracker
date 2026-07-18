@@ -59,4 +59,23 @@ export class EmailService {
       text: `Your verification code is: ${code}\n\nIt expires in 10 minutes. If you did not request this, ignore this email.`,
     });
   }
+
+  async sendRegistrationRequestEmail(
+    adminEmail: string,
+    code: string,
+    registrant: { name: string; email: string },
+  ): Promise<void> {
+    await this.checkSendLimit();
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(
+        `[dev] Registration request from ${registrant.name} <${registrant.email}>, code: ${code}`,
+      );
+    }
+    await this.mailer.messages.create(this.domain, {
+      from: `Finance Tracker <${this.from}>`,
+      to: [adminEmail],
+      subject: 'Finance Tracker registration request',
+      text: `${registrant.name} <${registrant.email}> is requesting to register.\n\nVerification code: ${code}\n\nIt expires in 10 minutes. Share it with them only if you want to approve this registration.`,
+    });
+  }
 }
