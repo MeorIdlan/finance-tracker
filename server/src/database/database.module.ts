@@ -26,6 +26,7 @@ import {
   NetWorthSnapshot,
   NetWorthSnapshotSchema,
 } from './schemas/net-worth-snapshot.schema';
+import { ApiToken, ApiTokenSchema } from './schemas/api-token.schema';
 
 const models = MongooseModule.forFeature([
   { name: User.name, schema: UserSchema },
@@ -42,6 +43,7 @@ const models = MongooseModule.forFeature([
   { name: CreditCard.name, schema: CreditCardSchema },
   { name: Transaction.name, schema: TransactionSchema },
   { name: NetWorthSnapshot.name, schema: NetWorthSnapshotSchema },
+  { name: ApiToken.name, schema: ApiTokenSchema },
 ]);
 
 @Global()
