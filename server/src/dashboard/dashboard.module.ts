@@ -9,5 +9,6 @@ import { DashboardController } from './dashboard.controller';
   imports: [AuthGuardModule, CreditCardsModule, TransactionsModule],
   controllers: [DashboardController],
   providers: [DashboardService],
+  exports: [DashboardService],
 })
 export class DashboardModule {}
