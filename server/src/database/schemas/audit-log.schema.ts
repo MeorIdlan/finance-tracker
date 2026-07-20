@@ -20,6 +20,9 @@ export class AuditLog {
   @Prop({ type: MongooseSchema.Types.Mixed })
   metadata?: Record<string, unknown>;
 
+  @Prop({ enum: ['user', 'agent'], default: 'user' })
+  actor: 'user' | 'agent';
+
   @Prop({ default: () => new Date(), index: true })
   timestamp: Date;
 }

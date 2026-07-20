@@ -141,3 +141,11 @@ export interface CategoryTotal {
   category: ExpenseCategory;
   total: number;
 }
+
+// ---- Agent MCP endpoint DTOs ----
+
+export interface AgentTokenStatusDto {
+  hasToken: boolean;
+  createdAt: string | null;
+  lastUsedAt: string | null;
+}

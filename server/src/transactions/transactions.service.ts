@@ -173,6 +173,7 @@ export class TransactionsService {
   async create(
     userId: string,
     dto: CreateTransactionDto,
+    actor: 'user' | 'agent' = 'user',
   ): Promise<TransactionDto> {
     await this.validateRefs(userId, dto);
     let doc!: TransactionDocument;
@@ -211,6 +212,7 @@ export class TransactionsService {
       entityType: 'Transaction',
       entityId: doc._id.toHexString(),
       metadata: { type: dto.type, amount: dto.amount },
+      actor,
     });
     return this.toDto(doc);
   }

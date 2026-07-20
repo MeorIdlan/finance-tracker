@@ -101,6 +101,18 @@ export default function SettingsPage() {
         </ul>
       </section>
 
+      <section className="mb-8">
+        <h2 className="mb-3 text-xs font-medium uppercase tracking-wide text-muted">
+          Agent access
+        </h2>
+        <Link
+          to="/settings/agent"
+          className="text-sm text-accent hover:underline"
+        >
+          Connect an AI agent via MCP →
+        </Link>
+      </section>
+
       <section>
         <h2 className="mb-3 text-xs font-medium uppercase tracking-wide text-muted">
           Recent activity

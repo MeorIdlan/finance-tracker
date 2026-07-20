@@ -15,6 +15,7 @@ import { LoansModule } from './loans/loans.module';
 import { CreditCardsModule } from './credit-cards/credit-cards.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { AgentModule } from './agent/agent.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     CreditCardsModule,
     TransactionsModule,
     DashboardModule,
+    AgentModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

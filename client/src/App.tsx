@@ -14,6 +14,7 @@ import CommitmentsPage from './pages/CommitmentsPage';
 import LoansPage from './pages/LoansPage';
 import CreditCardsPage from './pages/CreditCardsPage';
 import TransactionsPage from './pages/TransactionsPage';
+import AgentPage from './pages/AgentPage';
 
 export default function App() {
   return (
@@ -42,6 +43,16 @@ export default function App() {
               <ProtectedRoute>
                 <Layout>
                   <SettingsPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/agent"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AgentPage />
                 </Layout>
               </ProtectedRoute>
             }
