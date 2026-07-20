@@ -81,6 +81,7 @@ export default function AgentPage() {
               This token won&apos;t be shown again — copy it now.
             </p>
             <input
+              aria-label="Generated agent token"
               readOnly
               value={freshToken}
               onFocus={(e) => e.currentTarget.select()}
