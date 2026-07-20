@@ -60,4 +60,15 @@ describe('agent token status/rotate', () => {
     ).body.token;
     expect(second).not.toBe(first);
   });
+
+  it('rejects a bearer token (no cookie) on cookie-guarded routes', async () => {
+    const server = ctx.app.getHttpServer();
+    const rotateRes = await request(server).post('/api/agent-token/rotate').set('Cookie', cookie);
+    const token = rotateRes.body.token;
+
+    await request(server)
+      .post('/api/agent-token/rotate')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(401);
+  });
 });

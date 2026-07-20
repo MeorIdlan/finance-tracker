@@ -44,7 +44,7 @@ export class McpController {
         inputSchema: {
           type: z.enum(TRANSACTION_TYPES),
           amount: z.number().int().min(1).describe('Integer sen, e.g. RM 12.34 = 1234'),
-          date: z.string().describe('ISO 8601 date string'),
+          date: z.string().datetime({ offset: true }).describe('ISO 8601 date string'),
           category: z
             .enum(EXPENSE_CATEGORIES)
             .optional()
@@ -77,8 +77,12 @@ export class McpController {
         inputSchema: {},
       },
       async () => {
-        const result = await this.tools.getSummary(userId);
-        return toolResult(result);
+        try {
+          const result = await this.tools.getSummary(userId);
+          return toolResult(result);
+        } catch (err) {
+          return toolError(err instanceof Error ? err.message : 'Failed to get summary.');
+        }
       },
     );
 
@@ -91,8 +95,16 @@ export class McpController {
           type: z.enum(TRANSACTION_TYPES).optional(),
           category: z.enum(EXPENSE_CATEGORIES).optional(),
           sourceId: z.string().optional(),
-          from: z.string().optional().describe('ISO 8601 date, inclusive lower bound'),
-          to: z.string().optional().describe('ISO 8601 date, inclusive upper bound'),
+          from: z
+            .string()
+            .datetime({ offset: true })
+            .optional()
+            .describe('ISO 8601 date, inclusive lower bound'),
+          to: z
+            .string()
+            .datetime({ offset: true })
+            .optional()
+            .describe('ISO 8601 date, inclusive upper bound'),
           page: z.string().optional(),
           pageSize: z.string().optional(),
         },
@@ -115,8 +127,12 @@ export class McpController {
         inputSchema: {},
       },
       async () => {
-        const result = await this.tools.listAccounts(userId);
-        return toolResult(result);
+        try {
+          const result = await this.tools.listAccounts(userId);
+          return toolResult(result);
+        } catch (err) {
+          return toolError(err instanceof Error ? err.message : 'Failed to list accounts.');
+        }
       },
     );
 

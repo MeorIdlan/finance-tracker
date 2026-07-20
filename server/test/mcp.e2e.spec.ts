@@ -105,6 +105,7 @@ describe('MCP endpoint', () => {
       .get('/api/audit-log?page=1&pageSize=5')
       .set('Cookie', cookie);
     expect(audit.body.items[0].action).toBe('transaction.created');
+    expect(audit.body.items[0].actor).toBe('agent');
   });
 
   it('stops accepting the old token after rotate', async () => {
