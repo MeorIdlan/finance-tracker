@@ -9,6 +9,7 @@ export interface AuditEntry {
   entityType?: string;
   entityId?: string;
   metadata?: Record<string, unknown>;
+  actor?: 'user' | 'agent';
 }
 
 @Injectable()
