@@ -1,4 +1,25 @@
-import { IsIn, IsOptional, IsString } from 'class-validator';
+import { ArrayNotEmpty, IsArray, IsIn, IsOptional, IsString } from 'class-validator';
+
+export class RegisterClientDto {
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
+  redirect_uris: string[];
+
+  @IsOptional()
+  @IsString()
+  client_name?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  grant_types?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  response_types?: string[];
+}
 
 export class ApproveAuthorizeDto {
   @IsString()
