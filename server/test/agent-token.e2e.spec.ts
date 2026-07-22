@@ -3,7 +3,7 @@ import { startMemoryMongo } from './utils/mongo';
 import { createTestApp, TestCtx } from './utils/app';
 import { seedAuthedUser } from './utils/auth';
 
-describe('agent token status/rotate', () => {
+describe('agent token list/create/revoke', () => {
   let mongo: Awaited<ReturnType<typeof startMemoryMongo>>;
   let ctx: TestCtx;
   let cookie: string;
@@ -22,53 +22,76 @@ describe('agent token status/rotate', () => {
 
   it('rejects unauthenticated requests', async () => {
     const server = ctx.app.getHttpServer();
-    await request(server).get('/api/agent-token/status').expect(401);
-    await request(server).post('/api/agent-token/rotate').expect(401);
+    await request(server).get('/api/agent-token/list').expect(401);
+    await request(server).post('/api/agent-token/create').send({ label: 'x' }).expect(401);
+    await request(server)
+      .delete('/api/agent-token/000000000000000000000000')
+      .expect(401);
   });
 
-  it('reports no token before any rotate', async () => {
+  it('list is empty before any token is created', async () => {
     const res = await request(ctx.app.getHttpServer())
-      .get('/api/agent-token/status')
+      .get('/api/agent-token/list')
       .set('Cookie', cookie)
       .expect(200);
-    expect(res.body).toEqual({ hasToken: false, createdAt: null, lastUsedAt: null });
+    expect(res.body).toEqual([]);
   });
 
-  it('rotate returns a plaintext token once, then status reflects it', async () => {
+  it('create returns a plaintext token once, then list reflects it', async () => {
     const server = ctx.app.getHttpServer();
-    const rotateRes = await request(server)
-      .post('/api/agent-token/rotate')
+    const createRes = await request(server)
+      .post('/api/agent-token/create')
       .set('Cookie', cookie)
+      .send({ label: 'manual script' })
       .expect(201);
-    expect(rotateRes.body.token).toMatch(/^ftk_/);
+    expect(createRes.body.token).toMatch(/^ftk_/);
 
-    const statusRes = await request(server)
-      .get('/api/agent-token/status')
+    const listRes = await request(server)
+      .get('/api/agent-token/list')
       .set('Cookie', cookie)
       .expect(200);
-    expect(statusRes.body.hasToken).toBe(true);
-    expect(statusRes.body.token).toBeUndefined();
+    expect(listRes.body).toHaveLength(1);
+    expect(listRes.body[0]).toMatchObject({ label: 'manual script', source: 'manual' });
+    expect(listRes.body[0].token).toBeUndefined();
   });
 
-  it('rotating again invalidates the previous token for MCP auth', async () => {
+  it('creating a second token does not invalidate the first', async () => {
     const server = ctx.app.getHttpServer();
-    const first = (
-      await request(server).post('/api/agent-token/rotate').set('Cookie', cookie)
-    ).body.token;
-    const second = (
-      await request(server).post('/api/agent-token/rotate').set('Cookie', cookie)
-    ).body.token;
-    expect(second).not.toBe(first);
+    await request(server)
+      .post('/api/agent-token/create')
+      .set('Cookie', cookie)
+      .send({ label: 'two' });
+    const listRes = await request(server).get('/api/agent-token/list').set('Cookie', cookie);
+    expect(listRes.body).toHaveLength(2);
+  });
+
+  it('revoke removes a token by id and leaves others intact', async () => {
+    const server = ctx.app.getHttpServer();
+    const listRes = await request(server).get('/api/agent-token/list').set('Cookie', cookie);
+    const idToRemove = listRes.body[0].id as string;
+
+    await request(server)
+      .delete(`/api/agent-token/${idToRemove}`)
+      .set('Cookie', cookie)
+      .expect(204);
+
+    const after = await request(server).get('/api/agent-token/list').set('Cookie', cookie);
+    expect(after.body.map((t: { id: string }) => t.id)).not.toContain(idToRemove);
+    expect(after.body).toHaveLength(1);
   });
 
   it('rejects a bearer token (no cookie) on cookie-guarded routes', async () => {
     const server = ctx.app.getHttpServer();
-    const rotateRes = await request(server).post('/api/agent-token/rotate').set('Cookie', cookie);
-    const token = rotateRes.body.token;
+    const createRes = await request(server)
+      .post('/api/agent-token/create')
+      .set('Cookie', cookie)
+      .send({ label: 'bearer-test' });
+    const token = createRes.body.token;
 
     await request(server)
-      .post('/api/agent-token/rotate')
+      .post('/api/agent-token/create')
       .set('Authorization', `Bearer ${token}`)
+      .send({ label: 'nope' })
       .expect(401);
   });
 });
