@@ -19,4 +19,13 @@ export class OauthMetadataController {
       token_endpoint_auth_methods_supported: ['none'],
     };
   }
+
+  @Get('oauth-protected-resource')
+  protectedResource() {
+    const origin = this.config.get('WEBAUTHN_ORIGIN', 'http://localhost:5173');
+    return {
+      resource: origin,
+      authorization_servers: [origin],
+    };
+  }
 }
