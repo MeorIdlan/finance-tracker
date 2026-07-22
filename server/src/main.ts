@@ -17,7 +17,7 @@ async function bootstrap() {
   // collapsed into a single IP bucket.
   app.set('trust proxy', true);
   app.setGlobalPrefix('api', {
-    exclude: ['.well-known/oauth-authorization-server'],
+    exclude: ['.well-known/oauth-authorization-server', '.well-known/oauth-protected-resource'],
   });
   app.use(cookieParser());
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));

@@ -7,6 +7,7 @@ export default defineConfig({
     proxy: {
       '/api': 'http://localhost:3000',
       '/.well-known/oauth-authorization-server': 'http://localhost:3000',
+      '/.well-known/oauth-protected-resource': 'http://localhost:3000',
     },
   },
   build: {
