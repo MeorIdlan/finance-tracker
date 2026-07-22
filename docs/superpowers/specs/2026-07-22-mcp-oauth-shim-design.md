@@ -128,7 +128,7 @@ trust bar as before.
     check failed.
 - `oauth-code.store.ts` — in-memory `Map<code, {...}>`; entries swept lazily (checked
   against `expiresAt` on lookup, plus a periodic sweep) since this is a
-  single-instance deployment (`docs/deployment.md`) and codes live for 60 seconds.
+  single-instance deployment and codes live for 60 seconds.
 - Depends on `AgentTokenService` (export it from `AgentModule`) and the existing
   `AuthGuard`/`SessionService` for the approve endpoint.
 
@@ -152,12 +152,10 @@ trust bar as before.
 None new — no OAuth library needed; PKCE (S256) is just `crypto.createHash('sha256')`
 + base64url, same primitives already used for token hashing.
 
-### Docs
-
-`docs/deployment.md`: no new env vars. Note (informational only) that Claude
-Desktop's OAuth discovery hits `/.well-known/oauth-authorization-server` at the same
-origin as `/api`, already covered by the existing nginx proxy — no tunnel/infra
-change required, same reasoning as the original MCP endpoint design.
+No new env vars needed. Claude Desktop's OAuth discovery hits
+`/.well-known/oauth-authorization-server` at the same origin as `/api`, already
+covered by the existing nginx proxy — no tunnel/infra change required, same
+reasoning as the original MCP endpoint design.
 
 ## Error handling & security
 
