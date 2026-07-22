@@ -182,4 +182,29 @@ describe('OAuth shim', () => {
       .expect(400);
     expect(res.body.error).toBe('invalid_grant');
   });
+
+  it('rejects a redirect_uri that does not match the one used at approve time', async () => {
+    const server = ctx.app.getHttpServer();
+    const { verifier, challenge } = pkcePair();
+    const approveRedirectUri = 'http://127.0.0.1:3/cb';
+    const tokenRedirectUri = 'http://127.0.0.1:4/cb';
+
+    const approveRes = await request(server)
+      .post('/api/oauth/authorize/approve')
+      .set('Cookie', cookie)
+      .send({ redirectUri: approveRedirectUri, codeChallenge: challenge, codeChallengeMethod: 'S256' });
+    const code = new URL(approveRes.body.redirectUrl).searchParams.get('code');
+
+    const res = await request(server)
+      .post('/api/oauth/token')
+      .type('form')
+      .send({
+        grant_type: 'authorization_code',
+        code,
+        code_verifier: verifier,
+        redirect_uri: tokenRedirectUri,
+      })
+      .expect(400);
+    expect(res.body.error).toBe('invalid_grant');
+  });
 });
