@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { createHash, randomBytes } from 'crypto';
@@ -10,10 +10,15 @@ function hashToken(token: string): string {
 }
 
 @Injectable()
-export class AgentTokenService {
+export class AgentTokenService implements OnModuleInit {
   constructor(
     @InjectModel(ApiToken.name) private model: Model<ApiToken>,
   ) {}
+
+  // Drops the stale unique-per-user index from before the multi-token rework — autoIndex only adds, never removes.
+  async onModuleInit(): Promise<void> {
+    await this.model.syncIndexes();
+  }
 
   async create(
     userId: string,

@@ -26,10 +26,10 @@ export default function OAuthConsentPage() {
       const res = await api<{ redirectUrl: string }>('/oauth/authorize/approve', {
         method: 'POST',
         body: {
-          redirectUri: searchParams.get('redirect_uri'),
+          redirectUri: searchParams.get('redirect_uri') ?? undefined,
           state: searchParams.get('state') ?? undefined,
-          codeChallenge: searchParams.get('code_challenge'),
-          codeChallengeMethod: searchParams.get('code_challenge_method'),
+          codeChallenge: searchParams.get('code_challenge') ?? undefined,
+          codeChallengeMethod: searchParams.get('code_challenge_method') ?? undefined,
         },
       });
       window.location.href = res.redirectUrl;
