@@ -22,6 +22,11 @@ import { verifyPkce } from './pkce';
 
 const CODE_TTL_MS = 60_000;
 
+// The hosted Claude surfaces (Claude.ai web, Desktop, mobile, Cowork) always use this
+// fixed callback rather than a loopback redirect — only the Claude Code CLI is a native
+// RFC 8252 client. See https://claude.com/docs/connectors/building/authentication#callback-urls.
+const CLAUDE_HOSTED_REDIRECT_URI = 'https://claude.ai/api/mcp/auth_callback';
+
 function isLoopbackRedirect(redirectUri: string | undefined): boolean {
   if (!redirectUri) return false;
   try {
@@ -33,6 +38,10 @@ function isLoopbackRedirect(redirectUri: string | undefined): boolean {
   } catch {
     return false;
   }
+}
+
+function isAllowedRedirect(redirectUri: string | undefined): boolean {
+  return redirectUri === CLAUDE_HOSTED_REDIRECT_URI || isLoopbackRedirect(redirectUri);
 }
 
 @Controller('oauth')
@@ -61,8 +70,8 @@ export class OauthController {
   @Get('authorize')
   @Redirect()
   authorize(@Query() query: Record<string, string>) {
-    if (!isLoopbackRedirect(query.redirect_uri)) {
-      throw new HttpException('redirect_uri must be a loopback address', HttpStatus.BAD_REQUEST);
+    if (!isAllowedRedirect(query.redirect_uri)) {
+      throw new HttpException('redirect_uri must be a loopback address or the Claude hosted callback URL', HttpStatus.BAD_REQUEST);
     }
     const origin = this.config.get('WEBAUTHN_ORIGIN', 'http://localhost:5173');
     const params = new URLSearchParams(query).toString();
@@ -75,8 +84,8 @@ export class OauthController {
     @CurrentUser() user: AuthenticatedUser,
     @Body() body: ApproveAuthorizeDto,
   ) {
-    if (!isLoopbackRedirect(body.redirectUri)) {
-      throw new HttpException('redirect_uri must be a loopback address', HttpStatus.BAD_REQUEST);
+    if (!isAllowedRedirect(body.redirectUri)) {
+      throw new HttpException('redirect_uri must be a loopback address or the Claude hosted callback URL', HttpStatus.BAD_REQUEST);
     }
     const { token } = await this.tokens.create(
       user.userId,

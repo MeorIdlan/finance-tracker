@@ -77,6 +77,21 @@ describe('OAuth shim', () => {
     expect(res.headers.location).toContain('redirect_uri=');
   });
 
+  it('authorize redirects to the frontend consent page for the Claude hosted callback redirect_uri', async () => {
+    const res = await request(ctx.app.getHttpServer())
+      .get('/api/oauth/authorize')
+      .query({
+        client_id: 'abc',
+        redirect_uri: 'https://claude.ai/api/mcp/auth_callback',
+        state: 'xyz',
+        code_challenge: 'chal',
+        code_challenge_method: 'S256',
+        response_type: 'code',
+      })
+      .expect(302);
+    expect(res.headers.location).toContain('/oauth-consent?');
+  });
+
   it('authorize rejects a non-loopback redirect_uri', async () => {
     await request(ctx.app.getHttpServer())
       .get('/api/oauth/authorize')
