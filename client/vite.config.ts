@@ -6,6 +6,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': 'http://localhost:3000',
+      '/.well-known/oauth-authorization-server': 'http://localhost:3000',
     },
   },
   build: {
