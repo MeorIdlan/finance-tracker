@@ -45,7 +45,7 @@ export async function createTestApp(): Promise<TestCtx> {
   // req.ip resolution behavior as production (X-Forwarded-For aware).
   app.set('trust proxy', true);
   app.setGlobalPrefix('api', {
-    exclude: ['.well-known/oauth-authorization-server'],
+    exclude: ['.well-known/oauth-authorization-server', '.well-known/oauth-protected-resource'],
   });
   app.use(cookieParser());
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
