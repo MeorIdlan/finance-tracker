@@ -16,7 +16,9 @@ async function bootstrap() {
   // throttler guards read req.ip, so without this every external request
   // collapsed into a single IP bucket.
   app.set('trust proxy', true);
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api', {
+    exclude: ['.well-known/oauth-authorization-server'],
+  });
   app.use(cookieParser());
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   await app.listen(process.env.PORT ?? 3000);

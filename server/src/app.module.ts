@@ -16,6 +16,7 @@ import { CreditCardsModule } from './credit-cards/credit-cards.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { AgentModule } from './agent/agent.module';
+import { OauthModule } from './oauth/oauth.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { AgentModule } from './agent/agent.module';
     TransactionsModule,
     DashboardModule,
     AgentModule,
+    OauthModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

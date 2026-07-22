@@ -23,11 +23,23 @@ describe('ApiToken schema', () => {
     await mongod.stop();
   });
 
-  it('enforces one token document per user', async () => {
+  it('allows multiple token documents per user', async () => {
     const userId = new Types.ObjectId();
-    await model.create({ userId, tokenHash: 'hash-1', createdAt: new Date() });
+    await model.create({
+      userId,
+      label: 'first',
+      tokenHash: 'hash-1',
+      createdAt: new Date(),
+      source: 'manual',
+    });
     await expect(
-      model.create({ userId, tokenHash: 'hash-2', createdAt: new Date() }),
-    ).rejects.toThrow();
+      model.create({
+        userId,
+        label: 'second',
+        tokenHash: 'hash-2',
+        createdAt: new Date(),
+        source: 'manual',
+      }),
+    ).resolves.toBeDefined();
   });
 });

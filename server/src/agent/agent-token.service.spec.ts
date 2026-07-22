@@ -25,33 +25,62 @@ describe('AgentTokenService', () => {
     await mongod.stop();
   });
 
-  it('status reports no token before rotate is ever called', async () => {
+  it('list is empty before any token is created', async () => {
     const userId = new Types.ObjectId().toHexString();
-    const status = await service.status(userId);
-    expect(status).toEqual({ hasToken: false, createdAt: null, lastUsedAt: null });
+    expect(await service.list(userId)).toEqual([]);
   });
 
-  it('rotate creates a plaintext token resolvable via resolve()', async () => {
+  it('create returns a plaintext token resolvable via resolve()', async () => {
     const userId = new Types.ObjectId().toHexString();
-    const token = await service.rotate(userId);
-    expect(typeof token).toBe('string');
+    const { id, token } = await service.create(userId, 'manual script', 'manual');
     expect(token.startsWith('ftk_')).toBe(true);
 
-    const resolved = await service.resolve(token);
-    expect(resolved).toEqual({ userId });
+    expect(await service.resolve(token)).toEqual({ userId });
 
-    const status = await service.status(userId);
-    expect(status.hasToken).toBe(true);
-    expect(status.createdAt).not.toBeNull();
+    const list = await service.list(userId);
+    expect(list).toEqual([
+      {
+        id,
+        label: 'manual script',
+        createdAt: expect.any(String),
+        lastUsedAt: expect.any(String),
+        source: 'manual',
+      },
+    ]);
   });
 
-  it('rotating again invalidates the previous token', async () => {
+  it('creating a second token does not invalidate the first', async () => {
     const userId = new Types.ObjectId().toHexString();
-    const first = await service.rotate(userId);
-    const second = await service.rotate(userId);
-    expect(second).not.toBe(first);
-    expect(await service.resolve(first)).toBeNull();
-    expect(await service.resolve(second)).toEqual({ userId });
+    const first = await service.create(userId, 'first', 'manual');
+    const second = await service.create(userId, 'second', 'oauth');
+
+    expect(await service.resolve(first.token)).toEqual({ userId });
+    expect(await service.resolve(second.token)).toEqual({ userId });
+    expect((await service.list(userId)).map((t) => t.label).sort()).toEqual([
+      'first',
+      'second',
+    ]);
+  });
+
+  it('revoke removes only the targeted token', async () => {
+    const userId = new Types.ObjectId().toHexString();
+    const first = await service.create(userId, 'keep', 'manual');
+    const second = await service.create(userId, 'remove', 'manual');
+
+    await service.revoke(userId, second.id);
+
+    expect(await service.resolve(first.token)).toEqual({ userId });
+    expect(await service.resolve(second.token)).toBeNull();
+    expect((await service.list(userId)).map((t) => t.label)).toEqual(['keep']);
+  });
+
+  it('revoke throws for a token belonging to another user', async () => {
+    const userId = new Types.ObjectId().toHexString();
+    const otherUserId = new Types.ObjectId().toHexString();
+    const { id } = await service.create(userId, 'mine', 'manual');
+
+    await expect(service.revoke(otherUserId, id)).rejects.toThrow();
+    expect(await service.list(userId)).toHaveLength(1);
   });
 
   it('resolve returns null for an unknown token', async () => {

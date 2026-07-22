@@ -40,10 +40,11 @@ describe('MCP endpoint', () => {
     ctx = await createTestApp();
     ({ cookie } = await seedAuthedUser(ctx.app, 'mcp@user.com'));
     const server = ctx.app.getHttpServer();
-    const rotateRes = await request(server)
-      .post('/api/agent-token/rotate')
-      .set('Cookie', cookie);
-    token = rotateRes.body.token;
+    const createRes = await request(server)
+      .post('/api/agent-token/create')
+      .set('Cookie', cookie)
+      .send({ label: 'test agent' });
+    token = createRes.body.token;
     const accountRes = await request(server)
       .post('/api/accounts/bank')
       .set('Cookie', cookie)
@@ -108,9 +109,19 @@ describe('MCP endpoint', () => {
     expect(audit.body.items[0].actor).toBe('agent');
   });
 
-  it('stops accepting the old token after rotate', async () => {
+  it('stops accepting a token after it is revoked', async () => {
     const server = ctx.app.getHttpServer();
-    await request(server).post('/api/agent-token/rotate').set('Cookie', cookie);
+    const listRes = await request(server)
+      .get('/api/agent-token/list')
+      .set('Cookie', cookie);
+    const tokenId = listRes.body.find(
+      (t: { label: string }) => t.label === 'test agent',
+    ).id;
+
+    await request(server)
+      .delete(`/api/agent-token/${tokenId}`)
+      .set('Cookie', cookie);
+
     await rpc(server, token, { jsonrpc: '2.0', id: 4, method: 'tools/list' }).expect(401);
   });
 });

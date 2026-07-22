@@ -144,8 +144,12 @@ export interface CategoryTotal {
 
 // ---- Agent MCP endpoint DTOs ----
 
-export interface AgentTokenStatusDto {
-  hasToken: boolean;
-  createdAt: string | null;
+export type AgentTokenSource = 'manual' | 'oauth';
+
+export interface AgentTokenDto {
+  id: string;
+  label: string;
+  createdAt: string;
   lastUsedAt: string | null;
+  source: AgentTokenSource;
 }
