@@ -39,9 +39,26 @@ describe('OAuth shim', () => {
   it('register returns a client_id without requiring auth', async () => {
     const res = await request(ctx.app.getHttpServer())
       .post('/api/oauth/register')
-      .send({})
+      .send({ redirect_uris: ['http://127.0.0.1:54321/callback'] })
       .expect(201);
     expect(typeof res.body.client_id).toBe('string');
+  });
+
+  it('register echoes back redirect_uris as required by RFC 7591', async () => {
+    const res = await request(ctx.app.getHttpServer())
+      .post('/api/oauth/register')
+      .send({ redirect_uris: ['http://127.0.0.1:54321/callback'], client_name: 'Claude' })
+      .expect(201);
+    expect(res.body.redirect_uris).toEqual(['http://127.0.0.1:54321/callback']);
+    expect(res.body.grant_types).toEqual(['authorization_code']);
+    expect(res.body.response_types).toEqual(['code']);
+  });
+
+  it('register rejects a request missing redirect_uris', async () => {
+    await request(ctx.app.getHttpServer())
+      .post('/api/oauth/register')
+      .send({})
+      .expect(400);
   });
 
   it('authorize redirects to the frontend consent page for a loopback redirect_uri', async () => {

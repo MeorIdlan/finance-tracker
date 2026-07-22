@@ -17,7 +17,7 @@ import { CurrentUser } from '../auth/current-user.decorator';
 import { AuthenticatedUser } from '../auth-guard/session.service';
 import { AgentTokenService } from '../agent/agent-token.service';
 import { OauthCodeStore } from './oauth-code.store';
-import { ApproveAuthorizeDto, TokenExchangeDto } from './dto';
+import { ApproveAuthorizeDto, RegisterClientDto, TokenExchangeDto } from './dto';
 import { verifyPkce } from './pkce';
 
 const CODE_TTL_MS = 60_000;
@@ -45,9 +45,15 @@ export class OauthController {
 
   @Post('register')
   @HttpCode(201)
-  register() {
+  register(@Body() body: RegisterClientDto) {
+    // RFC 7591: the response MUST echo back the client's registered metadata
+    // (redirect_uris is a required field on the client's parsing schema) —
+    // returning only client_id fails client-side validation silently.
     return {
       client_id: randomBytes(12).toString('hex'),
+      redirect_uris: body.redirect_uris,
+      grant_types: body.grant_types ?? ['authorization_code'],
+      response_types: body.response_types ?? ['code'],
       token_endpoint_auth_method: 'none',
     };
   }
