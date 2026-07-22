@@ -15,6 +15,7 @@ import LoansPage from './pages/LoansPage';
 import CreditCardsPage from './pages/CreditCardsPage';
 import TransactionsPage from './pages/TransactionsPage';
 import AgentPage from './pages/AgentPage';
+import OAuthConsentPage from './pages/OAuthConsentPage';
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/register/passkey" element={<PasskeyPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/recover" element={<RecoverPage />} />
+          <Route path="/oauth-consent" element={<OAuthConsentPage />} />
           <Route
             path="/dashboard"
             element={

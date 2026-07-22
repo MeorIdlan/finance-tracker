@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { startAuthentication } from '@simplewebauthn/browser';
 import type { PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser';
 import { api, ApiError } from '../api';
@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { refresh } = useAuth();
 
   async function onSubmit(e: FormEvent) {
@@ -30,7 +31,7 @@ export default function LoginPage() {
         body: { challengeId, response },
       });
       await refresh();
-      navigate('/dashboard');
+      navigate(searchParams.get('next') ?? '/dashboard');
     } catch (err) {
       setError(
         err instanceof ApiError ? err.message : 'Login was cancelled or failed.',
